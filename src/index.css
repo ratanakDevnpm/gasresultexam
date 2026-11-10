@@ -1,0 +1,178 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-sans: 'Kantumruy Pro', 'Khmer OS Battambang', 'Battambang', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-khmer-body: 'Kantumruy Pro', 'Khmer OS Battambang', 'Battambang', 'Plus Jakarta Sans', sans-serif;
+    --font-khmer-moul: 'Khmer OS Muol Light', 'Moul', serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --brand-primary: #4f46e5;
+    --brand-primary-hover: #4338ca;
+    --brand-primary-light: #eef2ff;
+    --brand-gold: #f59e0b;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.font-khmer-body {
+  font-family: var(--font-khmer-body);
+  line-height: 1.75;
+}
+
+.font-khmer-moul {
+  font-family: var(--font-khmer-moul);
+  line-height: 1.85;
+  font-weight: 400;
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Official MoEYS Khmer Print Styles (@media print) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 9mm 10mm;
+  }
+
+  html,
+  body,
+  #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-family: 'Kantumruy Pro', 'Khmer OS Battambang', 'Battambang', sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 1. Hide Unnecessary UI Elements (Sidebar, Header, Footers, Toolbars, Filters, Buttons) */
+  .no-print,
+  .print\:hidden,
+  aside,
+  aside[aria-label="Desktop Compact Sidebar"],
+  header,
+  footer,
+  nav[aria-label="Mobile Bottom Navigation"],
+  nav[aria-label="Sidebar Navigation"] {
+    display: none !important;
+  }
+
+  /* 2. Expand Content Width to Full A4 Page */
+  main,
+  #top,
+  .lg\:pl-\[72px\],
+  .lg\:pl-64 {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* 3. Table & Typography Formatting */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  tr,
+  .break-inside-avoid,
+  .print-avoid-break,
+  .print-signature-section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-two-col-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .print-pyramid-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+
+  .print-table {
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+    color: #000000 !important;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #000000 !important;
+    padding: 2.5px 4px !important;
+    color: #000000 !important;
+  }
+
+  .print-master-roster-sheet {
+    display: block !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .print-master-roster-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+  }
+
+  .print-master-roster-table th,
+  .print-master-roster-table td {
+    border: 1px solid #000000 !important;
+    padding: 3px 4px !important;
+    color: #000000 !important;
+  }
+}

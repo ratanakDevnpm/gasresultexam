@@ -1,0 +1,6 @@
+{
+  "name": "Teok Chor High School – Exam & Result Management System (វិទ្យាល័យទឹកជោរ)",
+  "description": "Phase 1 Database Foundation, 19-Sheet Google Sheets Architecture, 17 Modular Google Apps Script Backend Services, Role-Based Question Security, and Official MoEYS Khmer Printable Reports for Teok Chor High School.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
