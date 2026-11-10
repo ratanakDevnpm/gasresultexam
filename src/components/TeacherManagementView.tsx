@@ -13,6 +13,7 @@ import {
   saveTeacherSubjectClassAssignments,
   setTeacherAccountStatus,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { invokeGasApi } from '../lib/gasBridge';
 import { DualRoleTeacherPermissionCard } from './DualRoleTeacherPermissionCard';
 import {
@@ -361,7 +362,7 @@ export const TeacherManagementView: React.FC<TeacherManagementViewProps> = ({
       () => result.teacher
     );
 
-    setDb(result.updatedDb);
+    DataService.commitState(setDb, result.updatedDb);
     if (result.teacher?.UserID) {
       setAssignTeacherId(result.teacher.UserID);
     }
@@ -401,7 +402,7 @@ export const TeacherManagementView: React.FC<TeacherManagementViewProps> = ({
       () => ({ ok: true })
     );
 
-    setDb(result.updatedDb);
+    DataService.commitState(setDb, result.updatedDb);
     setSyncState({
       status: 'SUCCESS',
       messageKh: result.messageKh,
@@ -490,7 +491,7 @@ export const TeacherManagementView: React.FC<TeacherManagementViewProps> = ({
       () => ({ ok: true, count: result.activeAssignmentsCount })
     );
 
-    setDb(result.updatedDb);
+    DataService.commitState(setDb, result.updatedDb);
     setSyncState({
       status: 'SUCCESS',
       messageKh: result.messageKh,
@@ -528,7 +529,7 @@ export const TeacherManagementView: React.FC<TeacherManagementViewProps> = ({
       });
       return;
     }
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setSyncState({
       status: 'SUCCESS',
       messageKh: res.messageKh,
@@ -559,7 +560,7 @@ export const TeacherManagementView: React.FC<TeacherManagementViewProps> = ({
       setSyncState({ status: 'ERROR', messageKh: res.messageKh });
       return;
     }
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setSyncState({
       status: 'SUCCESS',
       messageKh: res.messageKh,
@@ -581,7 +582,7 @@ export const TeacherManagementView: React.FC<TeacherManagementViewProps> = ({
       setSyncState({ status: 'ERROR', messageKh: res.messageKh });
       return;
     }
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setSyncState({
       status: 'SUCCESS',
       messageKh: res.messageKh,

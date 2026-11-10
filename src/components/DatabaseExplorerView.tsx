@@ -21,6 +21,7 @@ import {
   formatDateKhmerDisplay,
   hashPasswordSha256,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { formatKhmerReportTitle, handleGlobalPrint } from '../utils/printHelper';
 import {
   downloadStudentCsvTemplate,
@@ -569,7 +570,7 @@ export const DatabaseExplorerView: React.FC<DatabaseExplorerViewProps> = ({
   const handleSaveGasEndpointUrl = () => {
     if (!setDb) return;
     const now = new Date().toISOString();
-    setDb((prev) => ({
+    DataService.commitState(setDb, (prev) => ({
       ...prev,
       SystemSettings: prev.SystemSettings.map((s) =>
         s.SettingKey === 'GasWebAppEndpoint'
@@ -644,7 +645,7 @@ export const DatabaseExplorerView: React.FC<DatabaseExplorerViewProps> = ({
 
       if (setDb) {
         const now = new Date().toISOString();
-        setDb((prev) => {
+        DataService.commitState(setDb, (prev) => {
           const nextStudents = [...prev.Students];
           const nextEnrollments = [...prev.Enrollments];
           const nextMonthlyScores = [...prev.MonthlyScores];

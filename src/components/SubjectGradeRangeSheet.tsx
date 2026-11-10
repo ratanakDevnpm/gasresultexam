@@ -10,6 +10,7 @@ import {
   getSubjectGradeRangesFromDb,
   saveSubjectGradeRangesConfiguration,
 } from '../lib/subjectGradeRanges';
+import { DataService } from '../lib/centralizedDataService';
 import { handleGlobalPrint } from '../utils/printHelper';
 import {
   AlertTriangle,
@@ -167,7 +168,7 @@ export const SubjectGradeRangeSheet: React.FC<SubjectGradeRangeSheetProps> = ({
       setBanner({ type: 'ERROR', messageKh: res.messageKh });
       return;
     }
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setBanner({ type: 'SUCCESS', messageKh: res.messageKh });
   };
 

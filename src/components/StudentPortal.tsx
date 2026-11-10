@@ -16,6 +16,7 @@ import {
   validateStudentExamAccess,
 } from '../lib/domainRules';
 import { HONOR_PORTRAIT_URLS } from '../lib/seedData';
+import { DataService } from '../lib/centralizedDataService';
 import { resolveStudentProfilePhotoUrl } from '../lib/studentProfileRules';
 import { StudentPersonalProfileCard } from './StudentPersonalProfileCard';
 import {
@@ -423,12 +424,10 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
         TotalScore: 0,
         CreatedAt: now.toISOString(),
       };
-      setDb((prev) => ({
-        ...prev,
-        ExamAttempts: [newAttempt, ...prev.ExamAttempts],
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
+      DataService.commitState(setDb, (prev) => {
+        const res = DataService.createRecord(prev, 'ExamAttempts', newAttempt, {
+          position: 'PREPEND',
+          auditLog: {
             UserID: activeUserId,
             Action: 'START_ONLINE_EXAM_ATTEMPT',
             Module: 'ExaminationService.gs',
@@ -443,9 +442,9 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             IPOrSessionReference: 'GAS-EXAM-SVC',
             Description: `Student ${student.StudentID} started exam ${confirmingExamCard.exam.ExamID}`,
           },
-          ...prev.AuditLogs,
-        ],
-      }));
+        });
+        return res.ok ? res.db : prev;
+      });
     }
 
     // Restore auto-saved answers if any exist for this student + exam

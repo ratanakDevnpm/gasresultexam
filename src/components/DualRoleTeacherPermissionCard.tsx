@@ -12,6 +12,7 @@ import {
   saveHomeroomTeacherAssignment,
   saveTeacherSubjectClassAssignments,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import {
   Award,
   BookOpen,
@@ -101,7 +102,7 @@ export const DualRoleTeacherPermissionCard: React.FC<
       'USR-001'
     );
     if (res.ok) {
-      setDb(res.updatedDb);
+      DataService.commitState(setDb, res.updatedDb);
       setFeedbackMessageKh(res.messageKh);
     } else {
       setFeedbackMessageKh(res.messageKh);
@@ -146,7 +147,7 @@ export const DualRoleTeacherPermissionCard: React.FC<
       'USR-001'
     );
     if (res.ok) {
-      setDb(res.updatedDb);
+      DataService.commitState(setDb, res.updatedDb);
       setFeedbackMessageKh(res.messageKh);
     } else {
       setFeedbackMessageKh(res.messageKh);

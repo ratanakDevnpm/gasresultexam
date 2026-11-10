@@ -16,6 +16,7 @@ import {
   upsertStudentSubjectScoreAndRecalculate,
   validateSubjectScoreInput,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { HONOR_PORTRAIT_URLS } from '../lib/seedData';
 import {
   formatKhmerReportTitle,
@@ -331,7 +332,7 @@ export const OfficialReportsPage: React.FC<OfficialReportsViewProps> = ({
       lockActorId
     );
     if (res.ok) {
-      setDb(res.updatedDb);
+      DataService.commitState(setDb, res.updatedDb);
       setValidationErrorKh(null);
       setToast({
         message: res.messageKh,
@@ -378,7 +379,7 @@ export const OfficialReportsPage: React.FC<OfficialReportsViewProps> = ({
         setToast({ message: result.messageKh, variant: 'error' });
         return false;
       }
-      setDb(result.updatedDb);
+      DataService.commitState(setDb, result.updatedDb);
       setValidationErrorKh(null);
       setToast({
         message: result.messageKh,
@@ -459,7 +460,7 @@ export const OfficialReportsPage: React.FC<OfficialReportsViewProps> = ({
         }
         workingDb = res.updatedDb;
       }
-      setDb(workingDb);
+      DataService.commitState(setDb, workingDb);
       setSpreadsheetDrafts({});
       setValidationErrorKh(null);
       setToast({

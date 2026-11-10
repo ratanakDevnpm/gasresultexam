@@ -10,6 +10,7 @@ import {
   resetStudentPasswordToDefault,
   toKhmerNumerals,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { GAS_BACKEND_MODULES } from '../lib/gasBackendModules';
 import { Modal, Toast } from './ui';
 import {
@@ -184,7 +185,7 @@ export const StudentAccountsManagementPage: React.FC<
     setTimeout(() => {
       setProgressPercent(100);
       setIsBatchRunning(false);
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Users: result.updatedUsers,
         AuditLogs: [result.auditLogRecord, ...prev.AuditLogs],
@@ -219,10 +220,12 @@ export const StudentAccountsManagementPage: React.FC<
       return;
     }
 
-    setDb((prev) => ({
-      ...prev,
-      Users: res.updatedUsers,
-      AuditLogs: [
+    DataService.commitState(setDb, (prev) =>
+      DataService.appendAuditLog(
+        {
+          ...prev,
+          Users: res.updatedUsers,
+        },
         {
           LogID: `LOG-PROV-SGL-${Date.now().toString(36).toUpperCase()}`,
           UserID: activeUserId,
@@ -238,10 +241,9 @@ export const StudentAccountsManagementPage: React.FC<
           Timestamp: new Date().toISOString(),
           IPOrSessionReference: 'GAS-ADMIN-PORTAL',
           Description: `Provisioned student account for ${res.fullNameKh} (Username: ${res.studentCode})`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+        }
+      )
+    );
 
     setToast({
       tone: 'success',
@@ -277,7 +279,7 @@ export const StudentAccountsManagementPage: React.FC<
       return;
     }
 
-    setDb((prev) => ({
+    DataService.commitState(setDb, (prev) => ({
       ...prev,
       Users: res.updatedUsers,
       AuditLogs: res.auditLogRecord
@@ -755,13 +757,17 @@ export const StudentAccountsManagementPage: React.FC<
                       onClick={() => {
                         const matched = loginVerificationResult.matchedUser!;
                         // Ensure user is in db.Users before switching session
-                        setDb((prev) => {
-                          const exists = prev.Users.some(
-                            (u) => u.UserID === matched.UserID
+                        DataService.commitState(setDb, (prev) => {
+                          const exists = Boolean(
+                            DataService.findById(prev, 'Users', matched.UserID)
                           );
-                          return exists
-                            ? prev
-                            : { ...prev, Users: [...prev.Users, matched] };
+                          if (exists) return prev;
+                          const created = DataService.createRecord(
+                            prev,
+                            'Users',
+                            matched
+                          );
+                          return created.ok ? created.db : prev;
                         });
                         onLoginAsStudent(matched.UserID);
                       }}

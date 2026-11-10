@@ -59,8 +59,33 @@ function apiDispatch(requestJson) {
 
     switch (req.module) {
       case 'Database':
+        if (req.action === 'pingConnection' || req.action === 'readAll25Tables') {
+          return Database.readAll25Tables();
+        }
+        if (req.action === 'readTable') {
+          return Database.findAll(payload.tableKey);
+        }
+        if (req.action === 'createRecord') {
+          lock.waitLock(15000);
+          Authorization.verifyTableMutationPermission(sessionUser.UserID, payload.tableKey, 'CREATE', payload.record);
+          Validation.assertPrimaryIdNotDuplicate(payload.tableKey, payload.record);
+          Validation.assertForeignKeyRelationships(payload.tableKey, payload.record);
+          return Database.insertRow(payload.tableKey, payload.record);
+        }
+        if (req.action === 'updateRecord') {
+          lock.waitLock(15000);
+          Authorization.verifyTableMutationPermission(sessionUser.UserID, payload.tableKey, 'UPDATE', payload.record);
+          Validation.assertPrimaryIdNotDuplicate(payload.tableKey, payload.record, payload.primaryId);
+          Validation.assertForeignKeyRelationships(payload.tableKey, payload.record);
+          return Database.updateById(payload.tableKey, payload.primaryKeyField, payload.primaryId, payload.record);
+        }
+        if (req.action === 'deleteRecord') {
+          lock.waitLock(15000);
+          Authorization.verifyTableMutationPermission(sessionUser.UserID, payload.tableKey, 'DELETE', payload.record || {});
+          return Database.deleteById(payload.tableKey, payload.primaryKeyField, payload.primaryId);
+        }
         Authorization.requireRoles(sessionUser, ['SUPER_ADMIN']);
-        if (req.action === 'initializeAll19Sheets') {
+        if (req.action === 'initializeAll19Sheets' || req.action === 'initializeAll25Sheets') {
           lock.waitLock(15000);
           return Database.initializeAll19Sheets(sessionUser.UserID);
         }
@@ -93,6 +118,7 @@ function apiDispatch(requestJson) {
   } catch (err) {
     return {
       ok: false,
+      persisted: false,
       error: err && err.message ? err.message : String(err),
       timestamp: new Date().toISOString()
     };
@@ -107,12 +133,12 @@ function apiDispatch(requestJson) {
     id: 2,
     filename: 'Config.gs',
     layer: 'ENTRY_CONFIG',
-    summaryKh: 'ការកំណត់ថេរប្រព័ន្ធ ឈ្មោះសន្លឹកទិន្នន័យទាំង ១៩ និងថតឯកសារ Google Drive',
-    summaryEn: 'Centralized constants, 19 Sheet names, 17 official classes (7A-12C), and Drive folder IDs.',
+    summaryKh: 'ការកំណត់ថេរប្រព័ន្ធ ឈ្មោះសន្លឹកទិន្នន័យទាំង ២៥ (១៩ Core + ៦ Extended) និងថតឯកសារ Google Drive',
+    summaryEn: 'Centralized constants, 25 Sheet names (19 core + 6 extended), 17 official classes (7A-12C), and Drive folder IDs.',
     exportedFunctions: ['AppConfig', 'getSpreadsheetId', 'getDriveFolderId'],
     code: `/**
  * File 02: Config.gs
- * Centralized configuration for Teok Chor High School (វិទ្យាល័យទឹកជោរ)
+ * Centralized configuration for Teok Chor High School (វិទ្យាល័យទឹកជោរ) - 25 Sheets
  */
 
 var AppConfig = {
@@ -146,9 +172,15 @@ var AppConfig = {
     MONTHLY_SCORES: 'MonthlyScores',
     SEMESTER_SCORES: 'SemesterScores',
     ANNUAL_RESULTS: 'AnnualResults',
-    GRading_SCALES: 'GradingScales',
+    GRADING_SCALES: 'GradingScales',
     SYSTEM_SETTINGS: 'SystemSettings',
-    AUDIT_LOGS: 'AuditLogs'
+    AUDIT_LOGS: 'AuditLogs',
+    HOMEROOM_ASSIGNMENTS: 'HomeroomTeacherAssignments',
+    TEACHER_SPECIALIZATIONS: 'TeacherSpecializations',
+    SCORE_ENTRY_LOCKS: 'ScoreEntryLocks',
+    SCORE_SUBMISSIONS: 'ScoreSubmissions',
+    SCORE_MODIFICATION_HISTORY: 'ScoreModificationHistory',
+    SUBJECT_GRADE_RANGES: 'SubjectGradeRanges'
   }
 };
 
@@ -164,12 +196,12 @@ function getDriveFolderId(folderKey) {
     id: 3,
     filename: 'Database.gs',
     layer: 'DATA_VALIDATION',
-    summaryKh: 'ស្រទាប់គ្រប់គ្រងមូលដ្ឋានទិន្នន័យ Google Sheets ទាំង ១៩ សន្លឹក (Repository Pattern)',
-    summaryEn: 'Modular repository abstraction over Google Sheets supporting SQL-ready migration.',
-    exportedFunctions: ['initializeAll19Sheets', 'findAll', 'findById', 'insertRow', 'updateById'],
+    summaryKh: 'ស្រទាប់គ្រប់គ្រងមូលដ្ឋានទិន្នន័យ Google Sheets ទាំង ២៥ សន្លឹក (Repository Pattern)',
+    summaryEn: 'Modular repository abstraction over all 25 Google Sheets tables supporting CRUD and SQL-ready migration.',
+    exportedFunctions: ['initializeAll19Sheets', 'readAll25Tables', 'findAll', 'findById', 'insertRow', 'updateById', 'deleteById', 'upsertRow'],
     code: `/**
  * File 03: Database.gs
- * Google Sheets Repository Layer (19 Sheets) - Designed for seamless SQL migration
+ * Google Sheets Repository Layer (25 Sheets: 19 Core + 6 Extended)
  */
 
 var Database = (function () {
@@ -192,7 +224,13 @@ var Database = (function () {
     AnnualResults: ['AnnualResultID','StudentID','ClassID','SubjectID','AcademicYearID','AnnualTotal','AnnualAverage','Grade','Ranking','IsHonorRoll','ResultStatus','PublishedAt'],
     GradingScales: ['GradingScaleID','ScaleName','MinimumScore','MaximumScore','Grade','Description','AcademicYearID','Status'],
     SystemSettings: ['SettingID','SettingKey','SettingValue','SettingGroup','Description','UpdatedByUserID','UpdatedAt'],
-    AuditLogs: ['LogID','UserID','Action','Module','RecordID','OldValueJSON','NewValueJSON','Timestamp','IPOrSessionReference','Description']
+    AuditLogs: ['LogID','UserID','Action','Module','RecordID','OldValueJSON','NewValueJSON','Timestamp','IPOrSessionReference','Description'],
+    HomeroomTeacherAssignments: ['AssignmentID','TeacherID','ClassID','RoomNumber','AcademicYearID','RoleTitleKh','ResponsibilitiesJSON','Status','AssignedAt'],
+    TeacherSpecializations: ['SpecializationID','TeacherID','SubjectID','DegreeLevel','SpecializationNotes','IsPrimarySubject'],
+    ScoreEntryLocks: ['LockID','AcademicYearID','ClassID','PeriodType','PeriodLabel','IsLocked','LockedByUserID','LockedAt','UnlockReason'],
+    ScoreSubmissions: ['SubmissionID','AcademicYearID','ClassID','SubjectID','TeacherID','PeriodType','PeriodLabel','StudentCount','SubmittedCount','Status','SubmittedAt'],
+    ScoreModificationHistory: ['ModificationID','ScoreID','StudentID','ClassID','SubjectID','PeriodLabel','OldScore','NewScore','Reason','ModifiedByUserID','ModifiedAt'],
+    SubjectGradeRanges: ['SlotID','SubjectID','GradeLevel','MaxScore','GradeSymbol','MinScore','MaxRangeScore','MentionKh','MentionEn','ColorBadge']
   };
 
   function getSpreadsheet() {
@@ -213,8 +251,16 @@ var Database = (function () {
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
       sheet.setFrozenRows(1);
     });
-    AuditLog.record(actorUserId, 'INITIALIZE_19_SHEETS', 'Database', 'ALL', {}, { created: created }, 'Verified all 19 Google Sheets schemas.');
-    return { ok: true, totalSheets: 19, newlyCreated: created };
+    AuditLog.record(actorUserId, 'INITIALIZE_25_SHEETS', 'Database', 'ALL', {}, { created: created }, 'Verified all 25 Google Sheets schemas.');
+    return { ok: true, totalSheets: 25, newlyCreated: created };
+  }
+
+  function readAll25Tables() {
+    var state = {};
+    Object.keys(SCHEMA_HEADERS).forEach(function (sheetName) {
+      state[sheetName] = findAll(sheetName);
+    });
+    return { ok: true, persisted: true, data: state };
   }
 
   function findAll(sheetName) {
@@ -229,6 +275,11 @@ var Database = (function () {
     });
   }
 
+  function findById(sheetName, primaryKeyField, primaryId) {
+    var rows = findAll(sheetName);
+    return rows.filter(function (r) { return String(r[primaryKeyField]) === String(primaryId); })[0] || null;
+  }
+
   function insertRow(sheetName, recordObj) {
     var sheet = getSpreadsheet().getSheetByName(sheetName);
     var headers = SCHEMA_HEADERS[sheetName];
@@ -239,10 +290,54 @@ var Database = (function () {
     return recordObj;
   }
 
+  function updateById(sheetName, primaryKeyField, primaryId, patchObj) {
+    var sheet = getSpreadsheet().getSheetByName(sheetName);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var pkCol = headers.indexOf(primaryKeyField);
+    for (var r = 1; r < data.length; r++) {
+      if (String(data[r][pkCol]) === String(primaryId)) {
+        var updatedRow = headers.map(function (h, c) {
+          return patchObj[h] !== undefined ? patchObj[h] : data[r][c];
+        });
+        sheet.getRange(r + 1, 1, 1, headers.length).setValues([updatedRow]);
+        return patchObj;
+      }
+    }
+    throw new Error('Record not found in ' + sheetName + ': ' + primaryId);
+  }
+
+  function deleteById(sheetName, primaryKeyField, primaryId) {
+    var sheet = getSpreadsheet().getSheetByName(sheetName);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var pkCol = headers.indexOf(primaryKeyField);
+    for (var r = 1; r < data.length; r++) {
+      if (String(data[r][pkCol]) === String(primaryId)) {
+        sheet.deleteRow(r + 1);
+        return { ok: true, deletedId: primaryId };
+      }
+    }
+    throw new Error('Record not found in ' + sheetName + ': ' + primaryId);
+  }
+
+  function upsertRow(sheetName, primaryKeyField, recordObj) {
+    var existing = findById(sheetName, primaryKeyField, recordObj[primaryKeyField]);
+    if (existing) {
+      return updateById(sheetName, primaryKeyField, recordObj[primaryKeyField], recordObj);
+    }
+    return insertRow(sheetName, recordObj);
+  }
+
   return {
     initializeAll19Sheets: initializeAll19Sheets,
+    readAll25Tables: readAll25Tables,
     findAll: findAll,
-    insertRow: insertRow
+    findById: findById,
+    insertRow: insertRow,
+    updateById: updateById,
+    deleteById: deleteById,
+    upsertRow: upsertRow
   };
 })();`,
   },
@@ -250,15 +345,26 @@ var Database = (function () {
     id: 4,
     filename: 'Validation.gs',
     layer: 'DATA_VALIDATION',
-    summaryKh: 'ការត្រួតពិនិត្យទិន្នន័យបញ្ចូល (Input Sanitization & Schema Validation)',
-    summaryEn: 'Validates required fields, score boundaries, Khmer enums, and 17-class names.',
-    exportedFunctions: ['assertRequiredFields', 'validateScoreRange', 'validateClassName'],
+    summaryKh: 'ការត្រួតពិនិត្យទិន្នន័យបញ្ចូល ការពារ Primary ID ស្ទួន និងពិនិត្យ Foreign Key លើ Server',
+    summaryEn: 'Validates required fields, Primary ID uniqueness, Foreign Key references, score boundaries, and 17-class names.',
+    exportedFunctions: ['assertRequiredFields', 'assertPrimaryIdNotDuplicate', 'assertForeignKeyRelationships', 'validateScoreRange', 'validateClassName'],
     code: `/**
  * File 04: Validation.gs
- * Server-side data validation and sanitization rules
+ * Server-side data validation, duplicate Primary ID prevention, and Foreign Key checks
  */
 
 var Validation = (function () {
+  var PRIMARY_KEY_MAP = {
+    Users: 'UserID', Roles: 'RoleID', AcademicYears: 'AcademicYearID', Semesters: 'SemesterID',
+    Classes: 'ClassID', Students: 'StudentID', Enrollments: 'EnrollmentID', Subjects: 'SubjectID',
+    TeacherSubjectAssignments: 'AssignmentID', Exams: 'ExamID', Questions: 'QuestionID',
+    ExamAttempts: 'AttemptID', ExamAnswers: 'AnswerID', MonthlyScores: 'MonthlyScoreID',
+    SemesterScores: 'SemesterScoreID', AnnualResults: 'AnnualResultID', GradingScales: 'GradingScaleID',
+    SystemSettings: 'SettingID', AuditLogs: 'LogID', HomeroomTeacherAssignments: 'AssignmentID',
+    TeacherSpecializations: 'SpecializationID', ScoreEntryLocks: 'LockID',
+    ScoreSubmissions: 'SubmissionID', ScoreModificationHistory: 'ModificationID', SubjectGradeRanges: 'SlotID'
+  };
+
   function assertRequiredFields(obj, fields) {
     if (!obj || typeof obj !== 'object') {
       throw new Error('Invalid payload object.');
@@ -268,6 +374,45 @@ var Validation = (function () {
         throw new Error('Missing required field: ' + field);
       }
     });
+  }
+
+  function assertPrimaryIdNotDuplicate(tableKey, record, ignorePrimaryId) {
+    var pkField = PRIMARY_KEY_MAP[tableKey];
+    if (!pkField) return true;
+    var candidateId = String(record[pkField] || '').trim();
+    if (!candidateId) throw new Error('Missing Primary ID ' + pkField + ' for ' + tableKey);
+    var existingRows = Database.findAll(tableKey);
+    var dup = existingRows.filter(function (r) {
+      var id = String(r[pkField] || '').trim();
+      return id === candidateId && id !== String(ignorePrimaryId || '').trim();
+    })[0];
+    if (dup) {
+      throw new Error('Duplicate Primary ID in ' + tableKey + ': ' + pkField + '=' + candidateId);
+    }
+    if (tableKey === 'TeacherSubjectAssignments') {
+      var comboDup = existingRows.filter(function (a) {
+        if (ignorePrimaryId && String(a.AssignmentID) === String(ignorePrimaryId)) return false;
+        return String(a.TeacherID) === String(record.TeacherID) &&
+               String(a.SubjectID) === String(record.SubjectID) &&
+               String(a.AcademicYearID) === String(record.AcademicYearID);
+      })[0];
+      if (comboDup) {
+        throw new Error('Duplicate TeacherSubjectAssignment for TeacherID + SubjectID + AcademicYearID.');
+      }
+    }
+    return true;
+  }
+
+  function assertForeignKeyRelationships(tableKey, record) {
+    if (record.ClassID && record.ClassID !== 'ALL') {
+      var cls = Database.findById('Classes', 'ClassID', record.ClassID);
+      if (!cls) throw new Error('Invalid Foreign Key ClassID: ' + record.ClassID);
+    }
+    if (record.SubjectID && record.SubjectID !== 'ALL') {
+      var sub = Database.findById('Subjects', 'SubjectID', record.SubjectID);
+      if (!sub) throw new Error('Invalid Foreign Key SubjectID: ' + record.SubjectID);
+    }
+    return true;
   }
 
   function validateScoreRange(score, maxScore, allowUnrankedSentinel) {
@@ -290,6 +435,8 @@ var Validation = (function () {
 
   return {
     assertRequiredFields: assertRequiredFields,
+    assertPrimaryIdNotDuplicate: assertPrimaryIdNotDuplicate,
+    assertForeignKeyRelationships: assertForeignKeyRelationships,
     validateScoreRange: validateScoreRange,
     validateClassName: validateClassName
   };
@@ -364,12 +511,12 @@ var Authentication = (function () {
     id: 6,
     filename: 'Authorization.gs',
     layer: 'SECURITY_AUDIT',
-    summaryKh: 'គោលការណ៍សន្តិសុខមជ្ឈិម និង canManageQuestion(userId, questionId, action)',
-    summaryEn: 'Enforces RBAC across 5 roles and mandatory Teacher Question Ownership (SubjectID + CreatedByUserID).',
-    exportedFunctions: ['canManageQuestion', 'requireRoles', 'canAccessClassScores'],
+    summaryKh: 'គោលការណ៍សន្តិសុខមជ្ឈិម ការរឹតបន្តឹងគ្រូតាមមុខវិជ្ជា និង canManageQuestion(userId, questionId, action)',
+    summaryEn: 'Enforces RBAC across 5 roles, Teacher Subject restriction on backend, and mandatory Question Ownership (SubjectID + CreatedByUserID).',
+    exportedFunctions: ['canManageQuestion', 'verifyTableMutationPermission', 'requireRoles', 'canAccessClassScores'],
     code: `/**
  * File 06: Authorization.gs
- * Centralized RBAC & Mandatory Teacher Question Ownership Policy
+ * Centralized RBAC, Backend Teacher Subject Restriction & Mandatory Teacher Question Ownership Policy
  * NEVER trusts CreatedByUserID or permission flags sent from the frontend.
  */
 
@@ -381,6 +528,26 @@ var Authorization = (function () {
     if (!user) return null;
     var role = roles.filter(function (r) { return r.RoleID === user.RoleID; })[0];
     return role ? role.RoleName : null;
+  }
+
+  function verifyTableMutationPermission(userId, tableKey, action, record) {
+    var roleName = getUserRoleName(userId);
+    if (!roleName) throw new Error('Unauthorized: Active user not found.');
+    if (roleName === 'SUPER_ADMIN' || roleName === 'ADMIN') return true;
+    if (roleName === 'VIEWER') throw new Error('Forbidden: VIEWER is read-only.');
+    if (roleName === 'TEACHER') {
+      var assignments = Database.findAll(AppConfig.SHEETS.TEACHER_ASSIGNMENTS).filter(function (a) {
+        return a.TeacherID === userId && a.Status === 'ACTIVE';
+      });
+      var assignedSubjectIds = assignments.map(function (a) { return a.SubjectID; });
+      if (record && record.SubjectID && record.SubjectID !== 'ALL') {
+        if (assignedSubjectIds.indexOf(record.SubjectID) === -1) {
+          throw new Error('Forbidden: Teacher ' + userId + ' is restricted to assigned subjects only.');
+        }
+      }
+      return true;
+    }
+    return true;
   }
 
   /**
@@ -451,6 +618,7 @@ var Authorization = (function () {
 
   return {
     getUserRoleName: getUserRoleName,
+    verifyTableMutationPermission: verifyTableMutationPermission,
     canManageQuestion: canManageQuestion
   };
 })();`,

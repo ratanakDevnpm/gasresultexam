@@ -32,6 +32,12 @@ import {
   NOTIFICATION_CONDITIONS_CATALOG,
   NotificationRoleCategory,
 } from './lib/domainRules';
+import { DataService } from './lib/centralizedDataService';
+import {
+  DatabaseOperationFeedback,
+  GasAdapterConfig,
+  GasPersistenceAdapter,
+} from './lib/gasPersistenceAdapter';
 import { DatabaseExplorerView } from './components/DatabaseExplorerView';
 import { SecuritySimulatorView } from './components/SecuritySimulatorView';
 import { OfficialReportsView, ReportTemplateTab } from './components/OfficialReportsView';
@@ -241,9 +247,29 @@ const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
 ];
 
 export default function App() {
-  const [db, setDb] = useState<DatabaseState>(() => createInitialDatabaseState());
+  const [db, setDb] = useState<DatabaseState>(() =>
+    DataService.initializeDatabaseState()
+  );
+  const [adapterConfig, setAdapterConfig] = useState<GasAdapterConfig>(() =>
+    DataService.getAdapterConfig()
+  );
+  const [adapterFeedback, setAdapterFeedback] =
+    useState<DatabaseOperationFeedback>(() =>
+      GasPersistenceAdapter.getLatestFeedback()
+    );
   const [activeNav, setActiveNav] = useState<SidebarNavId>('DASHBOARD');
   const [activeUserId, setActiveUserId] = useState<string>('USR-TCH-12C'); // Default: ជួន លីរតនៈ (Homeroom 12C & ICT Teacher)
+
+  useEffect(() => {
+    DataService.setActiveActorUserId(activeUserId);
+  }, [activeUserId]);
+
+  useEffect(() => {
+    return DataService.subscribeFeedback((feedback, config) => {
+      setAdapterFeedback(feedback);
+      setAdapterConfig(config);
+    });
+  }, []);
   const [studentPortalTab, setStudentPortalTab] = useState<StudentPortalTabId>(
     'AVAILABLE_EXAMS'
   );
@@ -604,139 +630,9 @@ export default function App() {
     previousSchool: string;
     monthlyAverage: number;
   }) => {
-    const now = new Date().toISOString();
-    const studentId = `STD-${payload.studentCode}`;
-    const fullNameKh = `${payload.lastNameKh} ${payload.firstNameKh}`.trim();
-
-    setDb((prev) => {
-      const nextStudents = [
-        ...prev.Students,
-        {
-          StudentID: studentId,
-          StudentCode: payload.studentCode,
-          LastNameKh: payload.lastNameKh,
-          FirstNameKh: payload.firstNameKh,
-          FullNameKh: fullNameKh,
-          FamilyNameEn: payload.familyNameEn,
-          GivenNameEn: payload.givenNameEn,
-          Gender: payload.gender,
-          DateOfBirth: payload.dateOfBirth,
-          Phone: payload.phone,
-          BirthVillage: payload.village,
-          BirthCommune: 'ទឹកជោរ',
-          BirthDistrict: 'ព្រះនេត្រព្រះ',
-          BirthProvince: 'បន្ទាយមានជ័យ',
-          FatherLastNameKh: payload.lastNameKh,
-          FatherFirstNameKh: 'សុខា',
-          FatherOccupation: 'កសិករ',
-          MotherLastNameKh: 'ស៊ឹម',
-          MotherFirstNameKh: 'សុភា',
-          MotherOccupation: 'កសិករ',
-          CurrentVillage: payload.village,
-          CurrentCommune: 'ទឹកជោរ',
-          CurrentDistrict: 'ព្រះនេត្រព្រះ',
-          CurrentProvince: 'បន្ទាយមានជ័យ',
-          OrphanStatus: payload.orphanStatus,
-          DisabilityStatus: payload.disabilityStatus,
-          PovertyLevel: payload.povertyLevel,
-          PreviousSchool: payload.previousSchool,
-          ProfileImageID: '',
-          StudentStatus: 'កំពុងរៀន' as const,
-          Remarks: payload.monthlyAverage < 0 ? 'អវត្តមានប្រឡង (មិនចាត់ថ្នាក់)' : '',
-          CreatedAt: now,
-          UpdatedAt: now,
-        },
-      ];
-
-      const nextEnrollments = [
-        ...prev.Enrollments,
-        {
-          EnrollmentID: `ENR-2526-${payload.studentCode}`,
-          StudentID: studentId,
-          ClassID: payload.classId,
-          AcademicYearID: 'AY-2025-2026',
-          PreviousClass: '11C',
-          IsNewTransfer: false,
-          IsRepeater: false,
-          ExamRoom: 'បន្ទប់-12C-2',
-          DeskNumber: String(nextStudents.length),
-          ExamSession: '២០២៥-២០២៦',
-          EnrollmentDate: '2025-11-01',
-          EnrollmentStatus: 'កំពុងរៀន' as const,
-          Remarks: '',
-        },
-      ];
-
-      const nextMonthly = [
-        ...prev.MonthlyScores,
-        {
-          MonthlyScoreID: `MSC-2526-NOV-${payload.studentCode}`,
-          StudentID: studentId,
-          ClassID: payload.classId,
-          SubjectID: 'ALL',
-          AcademicYearID: 'AY-2025-2026',
-          Month: 'វិច្ឆិកា',
-          AssessmentType: 'MONTHLY_SUMMARY' as const,
-          Score: payload.monthlyAverage < 0 ? 0 : Math.round(payload.monthlyAverage * 10),
-          MaximumScore: 500,
-          AverageScore: payload.monthlyAverage,
-          Ranking: null,
-          Grade: 'មិនចាត់ថ្នាក់' as const,
-          IsPass: 'មិនចាត់ថ្នាក់' as const,
-          IsHonorRoll: false,
-          EnteredByUserID: activeUserId,
-          ApprovedByUserID: 'USR-ADM-01',
-          Status: 'PUBLISHED' as const,
-          CreatedAt: now,
-          UpdatedAt: now,
-        },
-      ];
-
-      const nextAnnual = [
-        ...prev.AnnualResults,
-        {
-          AnnualResultID: `ANR-2526-${payload.studentCode}`,
-          StudentID: studentId,
-          ClassID: payload.classId,
-          SubjectID: 'ALL',
-          AcademicYearID: 'AY-2025-2026',
-          AnnualTotal: payload.monthlyAverage < 0 ? 0 : Math.round(payload.monthlyAverage * 12),
-          AnnualAverage: payload.monthlyAverage,
-          Grade: 'មិនចាត់ថ្នាក់' as const,
-          Ranking: null,
-          IsHonorRoll: false,
-          ResultStatus: 'មិនចាត់ថ្នាក់' as const,
-          PublishedAt: now,
-        },
-      ];
-
-      const nextLogs = [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'CREATE_STUDENT_ROSTER',
-          Module: 'StudentService.gs',
-          RecordID: studentId,
-          OldValueJSON: '{}',
-          NewValueJSON: JSON.stringify({ StudentCode: payload.studentCode, ClassID: payload.classId }),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-WEB-SESSION',
-          Description: `Added student ${fullNameKh} (${payload.studentCode}) to ${payload.classId}`,
-        },
-        ...prev.AuditLogs,
-      ];
-
-      return recomputeClassRankings(
-        {
-          ...prev,
-          Students: nextStudents,
-          Enrollments: nextEnrollments,
-          MonthlyScores: nextMonthly,
-          AnnualResults: nextAnnual,
-          AuditLogs: nextLogs,
-        },
-        payload.classId
-      );
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.addStudentRecordCascade(prev, payload, activeUserId);
+      return res.ok ? res.db : prev;
     });
   };
 
@@ -757,90 +653,25 @@ export default function App() {
       studentStatus: StudentStatusKh;
     }
   ) => {
-    const now = new Date().toISOString();
-    const fullNameKh = `${payload.lastNameKh} ${payload.firstNameKh}`.trim();
-
-    setDb((prev) => ({
-      ...prev,
-      Students: prev.Students.map((st) =>
-        st.StudentID === studentId
-          ? {
-              ...st,
-              StudentCode: payload.studentCode || st.StudentCode,
-              LastNameKh: payload.lastNameKh,
-              FirstNameKh: payload.firstNameKh,
-              FullNameKh: fullNameKh,
-              Gender: payload.gender,
-              DateOfBirth: payload.dateOfBirth,
-              Phone: payload.phone,
-              BirthVillage: payload.village,
-              CurrentVillage: payload.village,
-              StudentStatus: payload.studentStatus,
-              OrphanStatus: payload.orphanStatus,
-              DisabilityStatus: payload.disabilityStatus,
-              PovertyLevel: payload.povertyLevel,
-              UpdatedAt: now,
-            }
-          : st
-      ),
-      Enrollments: prev.Enrollments.map((enr) =>
-        enr.StudentID === studentId && payload.classId
-          ? {
-              ...enr,
-              ClassID: payload.classId,
-              EnrollmentStatus:
-                payload.studentStatus === 'កំពុងរៀន'
-                  ? ('កំពុងរៀន' as const)
-                  : ('ផ្ទេរចេញ' as const),
-            }
-          : enr
-      ),
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'EDIT_STUDENT_ROSTER',
-          Module: 'StudentService.gs',
-          RecordID: studentId,
-          OldValueJSON: '{}',
-          NewValueJSON: JSON.stringify({ FullNameKh: fullNameKh, StudentStatus: payload.studentStatus }),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-WEB-SESSION',
-          Description: `Updated student record ${fullNameKh} (${studentId})`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.editStudentRecordCascade(
+        prev,
+        studentId,
+        payload,
+        activeUserId
+      );
+      return res.ok ? res.db : prev;
+    });
   };
 
   const handleDeleteStudentRecord = (studentId: string) => {
-    const now = new Date().toISOString();
-    setDb((prev) => {
-      const enr = prev.Enrollments.find((e) => e.StudentID === studentId);
-      const classId = enr?.ClassID || 'CLS-12C';
-      const nextState: DatabaseState = {
-        ...prev,
-        Students: prev.Students.filter((s) => s.StudentID !== studentId),
-        Enrollments: prev.Enrollments.filter((e) => e.StudentID !== studentId),
-        MonthlyScores: prev.MonthlyScores.filter((m) => m.StudentID !== studentId),
-        AnnualResults: prev.AnnualResults.filter((a) => a.StudentID !== studentId),
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: activeUserId,
-            Action: 'DELETE_STUDENT_ROSTER',
-            Module: 'StudentService.gs',
-            RecordID: studentId,
-            OldValueJSON: JSON.stringify({ StudentID: studentId }),
-            NewValueJSON: '{}',
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-WEB-SESSION',
-            Description: `Deleted student ${studentId} from master roster`,
-          },
-          ...prev.AuditLogs,
-        ],
-      };
-      return recomputeClassRankings(nextState, classId);
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.deleteStudentRecordCascade(
+        prev,
+        studentId,
+        activeUserId
+      );
+      return res.ok ? res.db : prev;
     });
   };
 
@@ -850,37 +681,21 @@ export default function App() {
     homeroomTeacherId: string;
     roomNumber: string;
   }): ClassRecord => {
-    const now = new Date().toISOString();
-    const classId = `CLS-${payload.className.toUpperCase()}`;
-    const created: ClassRecord = {
-      ClassID: classId,
+    const preCheck = DataService.createClassRecord(db, payload, activeUserId);
+    const fallbackClass: ClassRecord = preCheck.record || {
+      ClassID: `CLS-${payload.className.toUpperCase()}`,
       ClassName: payload.className.toUpperCase(),
       GradeLevel: String(payload.gradeLevel) as ClassRecord['GradeLevel'],
       AcademicYearID: 'AY-2025-2026',
       HomeroomTeacherID: payload.homeroomTeacherId,
       Status: 'ACTIVE',
-      CreatedAt: now,
+      CreatedAt: new Date().toISOString(),
     };
-    setDb((prev) => ({
-      ...prev,
-      Classes: [...prev.Classes, created],
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'CREATE_CLASS',
-          Module: 'ClassService.gs',
-          RecordID: classId,
-          OldValueJSON: '{}',
-          NewValueJSON: JSON.stringify(payload),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-WEB-SESSION',
-          Description: `Created class ${payload.className}`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
-    return created;
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.createClassRecord(prev, payload, activeUserId);
+      return res.ok ? res.db : prev;
+    });
+    return fallbackClass;
   };
 
   const handleCreateExam = (payload: {
@@ -891,10 +706,10 @@ export default function App() {
     totalPoints: number;
     passingScore: number;
   }): ExamRecord => {
+    const preCheck = DataService.createExamRecord(db, payload, activeUserId);
     const now = new Date().toISOString();
-    const examId = `EXM-2526-${String(db.Exams.length + 1).padStart(3, '0')}`;
-    const created: ExamRecord = {
-      ExamID: examId,
+    const fallbackExam: ExamRecord = preCheck.record || {
+      ExamID: `EXM-2526-${String(db.Exams.length + 1).padStart(3, '0')}`,
       ExamTitle: payload.examTitleKh,
       SubjectID: payload.subjectId,
       ClassID: payload.classId,
@@ -914,26 +729,11 @@ export default function App() {
       CreatedAt: now,
       UpdatedAt: now,
     };
-    setDb((prev) => ({
-      ...prev,
-      Exams: [created, ...prev.Exams],
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'CREATE_ONLINE_EXAM',
-          Module: 'ExamService.gs',
-          RecordID: examId,
-          OldValueJSON: '{}',
-          NewValueJSON: JSON.stringify({ ExamTitle: payload.examTitleKh, ClassID: payload.classId }),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-EXAM-SVC',
-          Description: `Created online exam ${payload.examTitleKh} (${examId})`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
-    return created;
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.createExamRecord(prev, payload, activeUserId);
+      return res.ok ? res.db : prev;
+    });
+    return fallbackExam;
   };
 
   const handleSubmitExamAttempt = (payload: {
@@ -951,142 +751,34 @@ export default function App() {
       gradedByUserId: string;
     }[];
   }): ExamAttemptRecord => {
+    const preCheck = DataService.submitExamAttemptCascade(db, payload, activeUserId);
     const now = new Date().toISOString();
-    const existingInProgress = db.ExamAttempts.find(
-      (a) =>
-        a.ExamID === payload.examId &&
-        a.StudentID === payload.studentId &&
-        a.AttemptStatus === 'IN_PROGRESS'
-    );
-    const attemptId =
-      existingInProgress?.AttemptID ||
-      `ATT-${String(db.ExamAttempts.length + 1).padStart(4, '0')}`;
-    const createdAttempt: ExamAttemptRecord = {
-      AttemptID: attemptId,
+    const fallbackAttempt: ExamAttemptRecord = preCheck.record || {
+      AttemptID: `ATT-${String(db.ExamAttempts.length + 1).padStart(4, '0')}`,
       ExamID: payload.examId,
       StudentID: payload.studentId,
-      AttemptNumber: existingInProgress?.AttemptNumber || 1,
-      StartedAt: existingInProgress?.StartedAt || now,
+      AttemptNumber: 1,
+      StartedAt: now,
       SubmittedAt: now,
-      ServerDeadline:
-        existingInProgress?.ServerDeadline ||
-        new Date(Date.now() + 3600000).toISOString(),
+      ServerDeadline: new Date(Date.now() + 3600000).toISOString(),
       AttemptStatus: payload.attemptStatus || 'SUBMITTED',
       TotalScore: payload.scoreObtained,
-      CreatedAt: existingInProgress?.CreatedAt || now,
+      CreatedAt: now,
     };
-
-    const newAnswerRecords = (payload.answersToSave || []).map((ans, idx) => ({
-      AnswerID: `ANS-${attemptId}-${idx + 1}`,
-      AttemptID: attemptId,
-      QuestionID: ans.questionId,
-      StudentID: payload.studentId,
-      AnswerJSON: ans.answerJson,
-      IsCorrect: ans.isCorrect,
-      ScoreAwarded: ans.scoreAwarded,
-      GradedByUserID: ans.gradedByUserId,
-      GradedAt: ans.gradedByUserId ? now : '',
-      SavedAt: now,
-    }));
-
-    setDb((prev) => {
-      const hasInProgress = prev.ExamAttempts.some(
-        (a) => a.AttemptID === attemptId
-      );
-      const nextAttempts = hasInProgress
-        ? prev.ExamAttempts.map((a) =>
-            a.AttemptID === attemptId ? createdAttempt : a
-          )
-        : [createdAttempt, ...prev.ExamAttempts];
-
-      return {
-        ...prev,
-        ExamAttempts: nextAttempts,
-        ExamAnswers: [
-          ...newAnswerRecords,
-          ...prev.ExamAnswers.filter((a) => a.AttemptID !== attemptId),
-        ],
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: activeUserId,
-            Action: 'SUBMIT_ONLINE_EXAM_ATTEMPT',
-            Module: 'ExaminationService.gs',
-            RecordID: attemptId,
-            OldValueJSON: '{}',
-            NewValueJSON: JSON.stringify({
-              examId: payload.examId,
-              studentId: payload.studentId,
-              scoreObtained: payload.scoreObtained,
-              status: createdAttempt.AttemptStatus,
-            }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-EXAM-SVC',
-            Description: `Submitted exam ${payload.examId} for ${payload.studentId}: ${payload.scoreObtained} pts (Status: ${createdAttempt.AttemptStatus})`,
-          },
-          ...prev.AuditLogs,
-        ],
-      };
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.submitExamAttemptCascade(prev, payload, activeUserId);
+      return res.ok ? res.db : prev;
     });
-    return createdAttempt;
+    return fallbackAttempt;
   };
 
   const handleGradeManualAnswers = (payload: {
     attemptId: string;
     gradedScores: Record<string, number>;
   }) => {
-    const now = new Date().toISOString();
-    setDb((prev) => {
-      const updatedAnswers = prev.ExamAnswers.map((ans) => {
-        if (ans.AttemptID !== payload.attemptId) return ans;
-        const score = payload.gradedScores[ans.AnswerID];
-        if (score === undefined) return ans;
-        return {
-          ...ans,
-          IsCorrect: score > 0,
-          ScoreAwarded: score,
-          GradedByUserID: activeUserId,
-          SavedAt: now,
-        };
-      });
-
-      const totalAttemptScore = updatedAnswers
-        .filter((a) => a.AttemptID === payload.attemptId)
-        .reduce((sum, a) => sum + a.ScoreAwarded, 0);
-
-      const updatedAttempts = prev.ExamAttempts.map((att) =>
-        att.AttemptID === payload.attemptId
-          ? {
-              ...att,
-              TotalScore: totalAttemptScore,
-              AttemptStatus: 'GRADED' as const,
-            }
-          : att
-      );
-
-      return {
-        ...prev,
-        ExamAnswers: updatedAnswers,
-        ExamAttempts: updatedAttempts,
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: activeUserId,
-            Action: 'TEACHER_MANUAL_GRADE_ATTEMPT',
-            Module: 'ExamService.gs',
-            RecordID: payload.attemptId,
-            OldValueJSON: '{"AttemptStatus":"SUBMITTED"}',
-            NewValueJSON: JSON.stringify({
-              AttemptStatus: 'GRADED',
-              TotalScore: totalAttemptScore,
-            }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-TEACHER-GRADING',
-            Description: `Teacher ${activeUserId} completed manual grading for ${payload.attemptId} (Total: ${totalAttemptScore} pts)`,
-          },
-          ...prev.AuditLogs,
-        ],
-      };
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.gradeManualAnswersCascade(prev, payload, activeUserId);
+      return res.ok ? res.db : prev;
     });
   };
 
@@ -1096,51 +788,13 @@ export default function App() {
     periodType: 'MONTHLY' | 'ANNUAL';
     newAverageScore: number;
   }) => {
-    const now = new Date().toISOString();
-    setDb((prev) => {
-      const nextMonthly =
-        params.periodType === 'MONTHLY'
-          ? prev.MonthlyScores.map((m) =>
-              m.StudentID === params.studentId && m.ClassID === params.classId
-                ? { ...m, AverageScore: params.newAverageScore, UpdatedAt: now }
-                : m
-            )
-          : prev.MonthlyScores;
-
-      const nextAnnual =
-        params.periodType === 'ANNUAL'
-          ? prev.AnnualResults.map((a) =>
-              a.StudentID === params.studentId && a.ClassID === params.classId
-                ? { ...a, AnnualAverage: params.newAverageScore, PublishedAt: now }
-                : a
-            )
-          : prev.AnnualResults;
-
-      const nextLogs = [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: `UPDATE_${params.periodType}_SCORE`,
-          Module: 'ScoreService.gs',
-          RecordID: params.studentId,
-          OldValueJSON: '{}',
-          NewValueJSON: JSON.stringify({ newAverageScore: params.newAverageScore }),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-SCORE-SESSION',
-          Description: `Updated ${params.periodType} average score for ${params.studentId} to ${params.newAverageScore}`,
-        },
-        ...prev.AuditLogs,
-      ];
-
-      return recomputeClassRankings(
-        {
-          ...prev,
-          MonthlyScores: nextMonthly,
-          AnnualResults: nextAnnual,
-          AuditLogs: nextLogs,
-        },
-        params.classId
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.updateStudentAverageScoreCascade(
+        prev,
+        params,
+        activeUserId
       );
+      return res.ok ? res.db : prev;
     });
   };
 
@@ -1167,138 +821,13 @@ export default function App() {
       params.subjectId
     );
 
-    const now = new Date().toISOString();
-
-    if (!decision.allowed) {
-      setDb((prev) => ({
-        ...prev,
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: params.userId,
-            Action: `SECURITY_DENIED_${params.action}`,
-            Module: 'Authorization.canManageQuestion',
-            RecordID: params.questionId || params.subjectId || 'QUESTION_BANK',
-            OldValueJSON: '{}',
-            NewValueJSON: JSON.stringify({ enforcedRule: decision.enforcedRule }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-SECURITY-GUARD',
-            Description: decision.reasonEn,
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
-
-      return {
-        allowed: false,
-        messageKh: decision.reasonKh,
-        messageEn: decision.reasonEn,
-        rule: decision.enforcedRule,
-      };
-    }
-
-    if (params.action === 'CREATE' && params.subjectId && params.questionText) {
-      const newQuestionId = `QST-${params.subjectId.replace('SUB-', '')}-00${db.Questions.length + 1}`;
-      setDb((prev) => ({
-        ...prev,
-        Questions: [
-          {
-            QuestionID: newQuestionId,
-            SubjectID: params.subjectId!,
-            QuestionText: params.questionText!,
-            QuestionType: params.questionType || 'MCQ',
-            OptionsJSON: JSON.stringify(['ក. ជម្រើសទី ១', 'ខ. ជម្រើសទី ២', 'គ. ជម្រើសទី ៣', 'ឃ. ជម្រើសទី ៤']),
-            CorrectAnswerJSON: JSON.stringify({ answerIndex: 0 }),
-            Points: params.points || 10,
-            DifficultyLevel: 'MEDIUM',
-            ImageFileID: '',
-            CreatedByUserID: params.userId,
-            UpdatedByUserID: params.userId,
-            Status: 'ACTIVE',
-            CreatedAt: now,
-            UpdatedAt: now,
-          },
-          ...prev.Questions,
-        ],
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: params.userId,
-            Action: 'CREATE_QUESTION_ALLOWED',
-            Module: 'QuestionService.gs',
-            RecordID: newQuestionId,
-            OldValueJSON: '{}',
-            NewValueJSON: JSON.stringify({ SubjectID: params.subjectId, CreatedByUserID: params.userId }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-QUESTION-SVC',
-            Description: `Created question ${newQuestionId} with server-enforced CreatedByUserID=${params.userId}`,
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
-    } else if (params.action === 'DELETE' && params.questionId) {
-      const targetQId = params.questionId;
-      setDb((prev) => ({
-        ...prev,
-        Questions: prev.Questions.map((q) =>
-          q.QuestionID === targetQId ? { ...q, Status: 'DELETED' as const, UpdatedAt: now } : q
-        ),
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: params.userId,
-            Action: 'DELETE_QUESTION_ALLOWED',
-            Module: 'QuestionService.gs',
-            RecordID: targetQId,
-            OldValueJSON: '{"Status":"ACTIVE"}',
-            NewValueJSON: '{"Status":"DELETED"}',
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-QUESTION-SVC',
-            Description: `Deleted question ${targetQId} after ownership verification.`,
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
-    } else if (params.action === 'EDIT' && params.questionId) {
-      const targetQId = params.questionId;
-      setDb((prev) => ({
-        ...prev,
-        Questions: prev.Questions.map((q) =>
-          q.QuestionID === targetQId
-            ? {
-                ...q,
-                QuestionText: params.questionText
-                  ? params.questionText
-                  : q.QuestionText.includes('[កែប្រែរួច]')
-                    ? q.QuestionText
-                    : `${q.QuestionText} [កែប្រែរួច]`,
-                QuestionType: params.questionType || q.QuestionType,
-                Points: params.points ?? q.Points,
-                UpdatedByUserID: params.userId,
-                UpdatedAt: now,
-              }
-            : q
-        ),
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: params.userId,
-            Action: 'EDIT_QUESTION_ALLOWED',
-            Module: 'QuestionService.gs',
-            RecordID: targetQId,
-            OldValueJSON: '{}',
-            NewValueJSON: JSON.stringify({ UpdatedByUserID: params.userId }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-QUESTION-SVC',
-            Description: `Edited question ${targetQId} after ownership verification.`,
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
-    }
+    DataService.commitState(
+      setDb,
+      (prev) => DataService.executeQuestionAction(prev, params).db
+    );
 
     return {
-      allowed: true,
+      allowed: decision.allowed,
       messageKh: decision.reasonKh,
       messageEn: decision.reasonEn,
       rule: decision.enforcedRule,
@@ -1306,63 +835,15 @@ export default function App() {
   };
 
   const handleSaveSystemSettings = (updatedSettings: SystemSettingRecord[]) => {
-    const now = new Date().toISOString();
-    setDb((prev) => ({
-      ...prev,
-      SystemSettings: updatedSettings,
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'UPDATE_SYSTEM_SETTINGS',
-          Module: 'ReportService.gs',
-          RecordID: 'SYS-METADATA',
-          OldValueJSON: JSON.stringify({ count: prev.SystemSettings.length }),
-          NewValueJSON: JSON.stringify({
-            updatedKeys: updatedSettings.map((s) => s.SettingKey),
-          }),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-ADMIN-SETTINGS',
-          Description: `Updated dynamic school metadata & official report dates in SystemSettings`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+    DataService.commitState(setDb, (prev) =>
+      DataService.saveSystemSettingsRecords(prev, updatedSettings, activeUserId)
+    );
   };
 
   const handleSaveGradingScales = (updatedScales: GradingScaleRecord[]) => {
-    const now = new Date().toISOString();
-    setDb((prev) => ({
-      ...prev,
-      GradingScales: updatedScales,
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'UPDATE_GRADING_SCALES',
-          Module: 'ScoreService.gs',
-          RecordID: 'GRADING-SCALES-AF',
-          OldValueJSON: JSON.stringify(
-            prev.GradingScales.map((g) => ({
-              grade: g.Grade,
-              min: g.MinimumScore,
-              max: g.MaximumScore,
-            }))
-          ),
-          NewValueJSON: JSON.stringify(
-            updatedScales.map((g) => ({
-              grade: g.Grade,
-              min: g.MinimumScore,
-              max: g.MaximumScore,
-            }))
-          ),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-ADMIN-SETTINGS',
-          Description: `Updated GradingScales (A–F thresholds) in GradingScales sheet`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+    DataService.commitState(setDb, (prev) =>
+      DataService.saveGradingScalesRecords(prev, updatedScales, activeUserId)
+    );
   };
 
   // Definition of the 9 Expandable/Collapsible Functional Sidebar Groups (Main Menu -> Sub Menu -> Child Menu)
@@ -3047,7 +2528,7 @@ export default function App() {
               labelKh: 'បម្រុងទុក និងស្តារទិន្នន័យ',
               icon: ShieldCheck,
               onClick: () => {
-                setSettingsInitialTab('GAS_ENDPOINT');
+                setSettingsInitialTab('BACKUP_RESET');
                 setActiveNav('SYSTEM_SETTINGS');
                 setIsMobileDrawerOpen(false);
               },
@@ -3696,6 +3177,155 @@ export default function App() {
 
           {/* Main Workspace Viewport */}
           <main id="top" className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* Phase 3: Google Sheets Persistence & Connection Status Bar */}
+            <section
+              aria-label="Google Sheets Database Connection Status"
+              data-testid="gas-persistence-status-bar"
+              className="no-print mb-4 rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-2xs space-y-2.5"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2.5 min-w-0">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-800 font-khmer-body">
+                    <Database className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>ស្ថានភាពតភ្ជាប់មូលដ្ឋានទិន្នន័យ (25 តារាង)៖</span>
+                  </span>
+
+                  {/* Connection Status Pill */}
+                  {adapterConfig.mode === 'GAS_PRODUCTION' &&
+                    adapterConfig.connectionState === 'CONNECTED' &&
+                    !adapterConfig.simulateConnectionFailure && (
+                      <span
+                        data-testid="gas-connection-badge"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-extrabold font-khmer-body"
+                      >
+                        <span>🟢 បានភ្ជាប់ Google Sheets (GAS_PRODUCTION)</span>
+                      </span>
+                    )}
+
+                  {adapterConfig.mode === 'GAS_PRODUCTION' &&
+                    (adapterConfig.connectionState === 'ERROR' ||
+                      adapterConfig.connectionState === 'DISCONNECTED' ||
+                      adapterConfig.simulateConnectionFailure) && (
+                      <span
+                        data-testid="gas-connection-badge"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-extrabold font-khmer-body"
+                      >
+                        <span>
+                          🔴 ដាច់ការតភ្ជាប់ Google Sheets (GAS Unavailable — ទិន្នន័យមិនរក្សាទុក)
+                        </span>
+                      </span>
+                    )}
+
+                  {adapterConfig.mode === 'IN_MEMORY_PREVIEW' && (
+                    <span
+                      data-testid="gas-connection-badge"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-extrabold font-khmer-body"
+                    >
+                      <span>🟡 In-Memory Preview (Local Dev — មិនទាន់ភ្ជាប់ Google Sheets)</span>
+                    </span>
+                  )}
+
+                  <span
+                    data-testid="gas-record-count-summary"
+                    className="text-[11px] font-mono-tabular font-bold text-slate-500"
+                  >
+                    សិស្ស៖ {db.Students.length} • សរុប 25 តារាង
+                  </span>
+                </div>
+
+                {/* Mode Switcher & Connection Controls */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="switch-mode-in-memory-btn"
+                    onClick={() => {
+                      DataService.setPersistenceMode('IN_MEMORY_PREVIEW');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-khmer-body border transition-all cursor-pointer ${
+                      adapterConfig.mode === 'IN_MEMORY_PREVIEW'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    IN_MEMORY_PREVIEW
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="switch-mode-gas-production-btn"
+                    onClick={() => {
+                      const res = DataService.setPersistenceMode(
+                        'GAS_PRODUCTION',
+                        {
+                          currentDb: db,
+                          simulateConnectionFailure: false,
+                        }
+                      );
+                      if (res.ok && res.db) {
+                        setDb(res.db);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-khmer-body border transition-all cursor-pointer ${
+                      adapterConfig.mode === 'GAS_PRODUCTION' &&
+                      !adapterConfig.simulateConnectionFailure
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                    }`}
+                  >
+                    GAS_PRODUCTION (Google Sheets)
+                  </button>
+
+                  {adapterConfig.mode === 'GAS_PRODUCTION' && (
+                    <button
+                      type="button"
+                      data-testid="toggle-gas-connection-failure-btn"
+                      onClick={() => {
+                        DataService.setSimulateGasFailure(
+                          !adapterConfig.simulateConnectionFailure
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-khmer-body border transition-all cursor-pointer ${
+                        adapterConfig.simulateConnectionFailure
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                          : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+                      }`}
+                    >
+                      {adapterConfig.simulateConnectionFailure
+                        ? 'ភ្ជាប់ Google Sheets ឡើងវិញ (Reconnect)'
+                        : 'សាកល្បងផ្តាច់ការតភ្ជាប់ GAS (Simulate Failure)'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Operation Feedback Strip (LOADING / SUCCESS / ERROR) */}
+              {adapterFeedback && adapterFeedback.status !== 'IDLE' && (
+                <div
+                  data-testid="gas-operation-feedback-banner"
+                  data-feedback-status={adapterFeedback.status}
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-khmer-body flex flex-wrap items-center justify-between gap-2 ${
+                    adapterFeedback.status === 'ERROR'
+                      ? 'bg-rose-50 border-rose-200 text-rose-800'
+                      : adapterFeedback.status === 'LOADING'
+                        ? 'bg-blue-50 border-blue-200 text-blue-800'
+                        : 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-extrabold">
+                      {adapterFeedback.titleKh}៖
+                    </span>
+                    <span className="truncate">{adapterFeedback.messageKh}</span>
+                  </div>
+                  <span className="text-[11px] font-mono-tabular font-bold shrink-0">
+                    {adapterFeedback.persistedToGoogleSheets
+                      ? 'Persisted to Google Sheets (25 Tables)'
+                      : 'Not Saved to Google Sheets'}
+                  </span>
+                </div>
+              )}
+            </section>
+
             {/* Hierarchical Menu Panel: Main Menu -> Sub Menu -> Child Menu */}
             {!isCurrentUserStudent && activeNav !== 'STUDENT_PORTAL' && !isSubmenuDataOpen && (() => {
               const activeGroup =
@@ -4023,7 +3653,9 @@ export default function App() {
                     onEditStudentRecord={handleEditStudentRecord}
                     onDeleteStudentRecord={handleDeleteStudentRecord}
                     onCreateClassRecord={handleCreateClassRecord}
-                    onResetDatabase={() => setDb(createInitialDatabaseState())}
+                    onResetDatabase={() =>
+                      DataService.resetToInitialSeedState(setDb)
+                    }
                   />
                 )}
 
@@ -4052,7 +3684,9 @@ export default function App() {
                     onEditStudentRecord={handleEditStudentRecord}
                     onDeleteStudentRecord={handleDeleteStudentRecord}
                     onCreateClassRecord={handleCreateClassRecord}
-                    onResetDatabase={() => setDb(createInitialDatabaseState())}
+                    onResetDatabase={() =>
+                      DataService.resetToInitialSeedState(setDb)
+                    }
                   />
                 )}
 
@@ -4227,7 +3861,9 @@ export default function App() {
                     initialTab={settingsInitialTab}
                     onSaveSystemSettings={handleSaveSystemSettings}
                     onSaveGradingScales={handleSaveGradingScales}
-                    onResetDatabase={() => setDb(createInitialDatabaseState())}
+                    onResetDatabase={() =>
+                      DataService.resetToInitialSeedState(setDb)
+                    }
                     onLoginAsStudent={(studentUserId) => {
                       setActiveUserId(studentUserId);
                       setIsSidebarExpanded(true);
@@ -4358,28 +3994,21 @@ export default function App() {
           setIsSystemLoginOpen(true);
         }}
         onConfirmLogout={() => {
-          const now = new Date().toISOString();
-          setDb((prev) => ({
-            ...prev,
-            AuditLogs: [
-              {
-                LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-                UserID: activeUser.UserID,
-                Action: 'AUTH_LOGOUT',
-                Module: 'Authentication.gs',
-                RecordID: activeUser.UserID,
-                OldValueJSON: JSON.stringify({
-                  userId: activeUser.UserID,
-                  role: activeRole?.RoleName,
-                }),
-                NewValueJSON: '{}',
-                Timestamp: now,
-                IPOrSessionReference: `SES-${activeUser.UserID}-2026`,
-                Description: `User ${activeUser.FullNameKh} (${activeUser.Username}) logged out via System Logout Dialog`,
-              },
-              ...prev.AuditLogs,
-            ],
-          }));
+          DataService.commitState(setDb, (prev) =>
+            DataService.appendAuditLog(prev, {
+              UserID: activeUser.UserID,
+              Action: 'AUTH_LOGOUT',
+              Module: 'Authentication.gs',
+              RecordID: activeUser.UserID,
+              OldValueJSON: JSON.stringify({
+                userId: activeUser.UserID,
+                role: activeRole?.RoleName,
+              }),
+              NewValueJSON: '{}',
+              IPOrSessionReference: `SES-${activeUser.UserID}-2026`,
+              Description: `User ${activeUser.FullNameKh} (${activeUser.Username}) logged out via System Logout Dialog`,
+            })
+          );
           setIsSystemLogoutOpen(false);
           setIsLoggedOutLock(true);
           setIsSystemLoginOpen(true);

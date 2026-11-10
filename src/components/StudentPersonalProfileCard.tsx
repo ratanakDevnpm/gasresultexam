@@ -8,6 +8,7 @@ import {
   STUDENT_PRESET_AVATARS,
   updateStudentSelfProfile,
 } from '../lib/studentProfileRules';
+import { DataService } from '../lib/centralizedDataService';
 import {
   Award,
   BookOpen,
@@ -167,7 +168,7 @@ export const StudentPersonalProfileCard: React.FC<
           profileImageId: resultStr,
         });
         if (res.ok) {
-          setDb(res.nextDb);
+          DataService.commitState(setDb, res.nextDb);
           setFeedbackBanner({
             type: 'success',
             messageKh:
@@ -195,7 +196,7 @@ export const StudentPersonalProfileCard: React.FC<
     });
 
     if (res.ok) {
-      setDb(res.nextDb);
+      DataService.commitState(setDb, res.nextDb);
       setFeedbackBanner({
         type: 'success',
         messageKh: res.messageKh,
@@ -239,7 +240,7 @@ export const StudentPersonalProfileCard: React.FC<
     });
 
     if (res.ok) {
-      setDb(res.nextDb);
+      DataService.commitState(setDb, res.nextDb);
       setIsEditingContact(false);
       setFeedbackBanner({
         type: 'success',

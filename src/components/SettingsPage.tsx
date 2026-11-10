@@ -6,12 +6,14 @@ import {
   SystemSettingRecord,
 } from '../types/database';
 import { DATABASE_SHEETS_SCHEMA } from '../lib/schemaDefinitions';
+import { DataService } from '../lib/centralizedDataService';
 import { Toast } from './ui';
 import { AuditLogsPage } from './AuditLogsPage';
 import { DesignSystemAndAuthView } from './DesignSystemAndAuthView';
 import { DualRoleTeacherPermissionCard } from './DualRoleTeacherPermissionCard';
 import { GasArchitectureView } from './GasArchitectureView';
 import { StudentAccountsManagementPage } from './StudentAccountsManagementPage';
+import { DatabaseBackupProtectionCenter } from './DatabaseBackupProtectionCenter';
 import {
   Building2,
   Calendar,
@@ -323,30 +325,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       }
       if (setDb) {
         const now = new Date().toISOString();
-        setDb((prev) => ({
-          ...prev,
-          AuditLogs: [
-            {
-              LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-              UserID: activeUserId,
-              Action: 'UPDATE_AUTH_SECURITY_POLICY',
-              Module: 'AuthService.gs',
-              RecordID: 'AUTH-POLICY-CONFIG',
-              OldValueJSON: '{}',
-              NewValueJSON: JSON.stringify({
-                minPasswordLength,
-                defaultStudentPwdPrefix,
-                hashAlgorithm,
-                sessionTimeoutHours,
-                enforceIdleLock,
-              }),
-              Timestamp: now,
-              IPOrSessionReference: 'GAS-AUTH-CONFIG',
-              Description: `Updated password policy (min=${minPasswordLength}, prefix=${defaultStudentPwdPrefix}) & session timeout (${sessionTimeoutHours}h)`,
-            },
-            ...prev.AuditLogs,
-          ],
-        }));
+        DataService.commitState(setDb, (prev) =>
+          DataService.appendAuditLog(prev, {
+            UserID: activeUserId,
+            Action: 'UPDATE_AUTH_SECURITY_POLICY',
+            Module: 'AuthService.gs',
+            RecordID: 'AUTH-POLICY-CONFIG',
+            OldValueJSON: '{}',
+            NewValueJSON: JSON.stringify({
+              minPasswordLength,
+              defaultStudentPwdPrefix,
+              hashAlgorithm,
+              sessionTimeoutHours,
+              enforceIdleLock,
+            }),
+            Timestamp: now,
+            IPOrSessionReference: 'GAS-AUTH-CONFIG',
+            Description: `Updated password policy (min=${minPasswordLength}, prefix=${defaultStudentPwdPrefix}) & session timeout (${sessionTimeoutHours}h)`,
+          })
+        );
       }
       setToast({
         tone: 'success',
@@ -402,34 +399,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       return;
     }
     const now = new Date().toISOString();
-    setDb((prev) => ({
-      ...prev,
-      Users: prev.Users.map((u) =>
-        u.UserID === targetUserId
-          ? {
-              ...u,
-              PasswordHash: `sha256$reset_${now.slice(0, 10)}$TeokChorStaff2026`,
-              MustChangePassword: true,
-              UpdatedAt: now,
-            }
-          : u
-      ),
-      AuditLogs: [
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.updateRecord(
+        prev,
+        'Users',
+        targetUserId,
+        (u) => ({
+          ...u,
+          PasswordHash: `sha256$reset_${now.slice(0, 10)}$TeokChorStaff2026`,
+          MustChangePassword: true,
+          UpdatedAt: now,
+        }),
         {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'RESET_STAFF_PASSWORD',
-          Module: 'UserService.gs',
-          RecordID: targetUserId,
-          OldValueJSON: '{"MustChangePassword":false}',
-          NewValueJSON: '{"MustChangePassword":true,"ResetByAdmin":true}',
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-ADMIN-AUTH',
-          Description: `Reset password for staff account ${fullNameKh} (${targetUserId})`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+          auditLog: {
+            UserID: activeUserId,
+            Action: 'RESET_STAFF_PASSWORD',
+            Module: 'UserService.gs',
+            RecordID: targetUserId,
+            OldValueJSON: '{"MustChangePassword":false}',
+            NewValueJSON: '{"MustChangePassword":true,"ResetByAdmin":true}',
+            Timestamp: now,
+            IPOrSessionReference: 'GAS-ADMIN-AUTH',
+            Description: `Reset password for staff account ${fullNameKh} (${targetUserId})`,
+          },
+        }
+      );
+      return res.ok ? res.db : prev;
+    });
     setToast({
       tone: 'success',
       title: `កំណត់ពាក្យសម្ងាត់ឡើងវិញជោគជ័យ (${fullNameKh})`,
@@ -460,33 +456,32 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
     const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     const now = new Date().toISOString();
-    setDb((prev) => ({
-      ...prev,
-      Users: prev.Users.map((u) =>
-        u.UserID === targetUserId
-          ? {
-              ...u,
-              Status: nextStatus as 'ACTIVE' | 'INACTIVE',
-              UpdatedAt: now,
-            }
-          : u
-      ),
-      AuditLogs: [
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.updateRecord(
+        prev,
+        'Users',
+        targetUserId,
+        (u) => ({
+          ...u,
+          Status: nextStatus as 'ACTIVE' | 'INACTIVE',
+          UpdatedAt: now,
+        }),
         {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: nextStatus === 'INACTIVE' ? 'DEACTIVATE_STAFF_USER' : 'ACTIVATE_STAFF_USER',
-          Module: 'UserService.gs',
-          RecordID: targetUserId,
-          OldValueJSON: JSON.stringify({ Status: currentStatus }),
-          NewValueJSON: JSON.stringify({ Status: nextStatus }),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-ADMIN-AUTH',
-          Description: `Changed account status for ${fullNameKh} (${targetUserId}) to ${nextStatus}`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+          auditLog: {
+            UserID: activeUserId,
+            Action: nextStatus === 'INACTIVE' ? 'DEACTIVATE_STAFF_USER' : 'ACTIVATE_STAFF_USER',
+            Module: 'UserService.gs',
+            RecordID: targetUserId,
+            OldValueJSON: JSON.stringify({ Status: currentStatus }),
+            NewValueJSON: JSON.stringify({ Status: nextStatus }),
+            Timestamp: now,
+            IPOrSessionReference: 'GAS-ADMIN-AUTH',
+            Description: `Changed account status for ${fullNameKh} (${targetUserId}) to ${nextStatus}`,
+          },
+        }
+      );
+      return res.ok ? res.db : prev;
+    });
     setToast({
       tone: nextStatus === 'ACTIVE' ? 'success' : 'info',
       title:
@@ -527,25 +522,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleInitialize19Sheets = () => {
     const now = new Date().toISOString();
     if (setDb) {
-      setDb((prev) => ({
-        ...prev,
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: activeUserId,
-            Action: 'INITIALIZE_VERIFY_19_SHEETS',
-            Module: 'Setup.gs',
-            RecordID: 'GAS-19-SHEETS-SCHEMA',
-            OldValueJSON: '{"verifiedSheets":19}',
-            NewValueJSON: '{"verifiedSheets":19,"status":"HEALTHY_INDEXED"}',
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-SETUP-ENGINE',
-            Description:
-              'Executed initializeAllSheets() — verified all 19 normalized sheets, primary keys, and headers.',
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
+      DataService.commitState(setDb, (prev) =>
+        DataService.appendAuditLog(prev, {
+          UserID: activeUserId,
+          Action: 'INITIALIZE_VERIFY_19_SHEETS',
+          Module: 'Setup.gs',
+          RecordID: 'GAS-19-SHEETS-SCHEMA',
+          OldValueJSON: '{"verifiedSheets":19}',
+          NewValueJSON: '{"verifiedSheets":19,"status":"HEALTHY_INDEXED"}',
+          Timestamp: now,
+          IPOrSessionReference: 'GAS-SETUP-ENGINE',
+          Description:
+            'Executed initializeAllSheets() — verified all 19 normalized sheets, primary keys, and headers.',
+        })
+      );
     }
     setLastSheetSyncTime(new Date().toLocaleTimeString('km-KH'));
     setToast({
@@ -559,7 +549,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   // Academic Year Handlers
   const handleSetCurrentAcademicYear = (yearId: string, yearName: string) => {
     if (!canEditSettings || !setDb) return;
-    setDb((prev) => ({
+    DataService.commitState(setDb, (prev) => ({
       ...prev,
       AcademicYears: prev.AcademicYears.map((ay) => ({
         ...ay,
@@ -577,7 +567,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleAddAcademicYear = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEditSettings || !setDb || !newYearName.trim()) return;
-    const newId = `AY-${String(db.AcademicYears.length + 1).padStart(3, '0')}`;
+    let seq = db.AcademicYears.length + 1;
+    let newId = `AY-${String(seq).padStart(3, '0')}`;
+    while (DataService.findById(db, 'AcademicYears', newId)) {
+      seq += 1;
+      newId = `AY-${String(seq).padStart(3, '0')}`;
+    }
     const newRecord: AcademicYearRecord = {
       AcademicYearID: newId,
       AcademicYearName: newYearName.trim(),
@@ -587,10 +582,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       Status: 'ACTIVE',
       CreatedAt: new Date().toISOString(),
     };
-    setDb((prev) => ({
-      ...prev,
-      AcademicYears: [...prev.AcademicYears, newRecord],
-    }));
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.createRecord(prev, 'AcademicYears', newRecord);
+      return res.ok ? res.db : prev;
+    });
     setNewYearName('');
     setToast({
       tone: 'success',
@@ -1786,68 +1781,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           {activeTab === 'AUDIT_LOGS' && <AuditLogsPage db={db} activeUserId={activeUserId} />}
 
           {/* =====================================================================
-              TAB 8: បម្រុងទុកទិន្នន័យ (BACKUP & RESET)
+              TAB 8: បម្រុងទុកទិន្នន័យ (BACKUP & RESET — PHASE 1 FULL BACKUP & DATA PROTECTION)
           ===================================================================== */}
           {activeTab === 'BACKUP_RESET' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Card 1: Export Full 19-Sheet JSON Snapshot */}
-              <div className="p-6 rounded-2xl bg-slate-50/70 border border-slate-200/90 space-y-4 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <Download className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-sm font-extrabold text-slate-900 font-khmer-body">
-                    ទាញយកឯកសារទិន្នន័យទាំង ១៩ សន្លឹក (Export Full JSON Snapshot)
-                  </h4>
-                  <p className="text-xs text-slate-500 font-khmer-body leading-relaxed">
-                    រក្សាទុកទិន្នន័យសិស្សទាំង ៣៦ ជួរឈរ ពិន្ទុប្រចាំខែ ឃ្លាំងសំណួរ គណនីអ្នកប្រើប្រាស់ និងកំណត់ហេតុសវនកម្មទាំងអស់ជាឯកសារ JSON សម្រាប់ការពារទិន្នន័យ។
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleExportBackupJson}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold font-khmer-body transition-colors cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>ទាញយកឯកសារ Backup (.json)</span>
-                </button>
-              </div>
-
-              {/* Card 2: Reset to Default Teok Chor High School Seed State */}
-              <div className="p-6 rounded-2xl bg-rose-50/40 border border-rose-200/80 space-y-4 flex flex-col justify-between">
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                    <RotateCcw className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-sm font-extrabold text-rose-950 font-khmer-body">
-                    កំណត់ទិន្នន័យដើមឡើងវិញ (Reset to Teok Chor Seed Data)
-                  </h4>
-                  <p className="text-xs text-rose-800/80 font-khmer-body leading-relaxed">
-                    ត្រឡប់ទិន្នន័យទាំង ១៩ សន្លឹកទៅកាន់ទិន្នន័យដើមរបស់វិទ្យាល័យទឹកជោរ (ថ្នាក់ 12C គ្រូបន្ទុកថ្នាក់ ជួន លីរតនៈ និងសិស្សគំរូ)។
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  disabled={!canEditSettings}
-                  onClick={() => {
-                    if (onResetDatabase) {
-                      onResetDatabase();
-                    }
-                    setToast({
-                      tone: 'info',
-                      title: 'បានកំណត់ទិន្នន័យប្រព័ន្ធទៅកាន់ទិន្នន័យដើមឡើងវិញ',
-                      description: 'មូលដ្ឋានទិន្នន័យទាំង ១៩ សន្លឹកត្រូវបានស្តារឡើងវិញដោយជោគជ័យ។',
-                    });
-                  }}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold font-khmer-body transition-colors cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>កំណត់ទិន្នន័យដើមឡើងវិញ (Factory Seed Reset)</span>
-                </button>
-              </div>
-            </div>
+            <DatabaseBackupProtectionCenter
+              db={db}
+              setDb={setDb}
+              activeUserId={activeUserId}
+              canEditSettings={canEditSettings}
+              onResetDatabase={onResetDatabase}
+              onNotify={(notif) => setToast(notif)}
+            />
           )}
 
           {/* Sticky Bottom Action Bar: "រក្សាទុកការផ្លាស់ប្តូរ (Save Changes)" */}

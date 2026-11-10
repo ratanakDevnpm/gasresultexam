@@ -12,6 +12,7 @@ import {
   saveSubjectAcademicConfiguration,
   SUBJECT_MANAGEMENT_SUBMENUS,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { TeacherManagementView } from './TeacherManagementView';
 import { SubjectGradeRangeSheet } from './SubjectGradeRangeSheet';
 import {
@@ -160,7 +161,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
       return;
     }
 
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setFeedbackBanner({ type: 'SUCCESS', messageKh: res.messageKh });
     if (!editingSubjectId) {
       handleResetSubjectForm();
@@ -201,7 +202,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
       setFeedbackBanner({ type: 'ERROR', messageKh: res.messageKh });
       return;
     }
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setFeedbackBanner({ type: 'SUCCESS', messageKh: res.messageKh });
   };
 
@@ -211,7 +212,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
       setFeedbackBanner({ type: 'ERROR', messageKh: res.messageKh });
       return;
     }
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setFeedbackBanner({ type: 'SUCCESS', messageKh: res.messageKh });
   };
 
@@ -936,10 +937,9 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
           showOverallScaleSection={true}
           onSaveOverallGradingScales={(updatedScales) => {
             setGradingScalesDraft(updatedScales);
-            setDb((prev) => ({
-              ...prev,
-              GradingScales: updatedScales,
-            }));
+            DataService.commitState(setDb, (prev) =>
+              DataService.saveGradingScalesRecords(prev, updatedScales, activeUserId)
+            );
           }}
         />
       )}

@@ -15,6 +15,7 @@ import {
   PortalRoute,
   StudentIdAuthResult,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 
 export interface AuthSession {
   user: UserRecord;
@@ -75,9 +76,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   children,
 }) => {
   const resolveSessionForUser = (userId: string, state: DatabaseState): AuthSession => {
-    const user = state.Users.find((u) => u.UserID === userId) || state.Users[2];
+    const user = DataService.findById(state, 'Users', userId) || state.Users[2];
     const role =
-      state.Roles.find((r) => r.RoleID === user.RoleID) || {
+      DataService.findById(state, 'Roles', user.RoleID) || {
         RoleID: 'ROL-03',
         RoleName: 'TEACHER' as RoleName,
         Description: 'Teacher',
@@ -128,38 +129,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     if (result.ok && result.user && result.role && result.portalRoute && result.sessionToken) {
       const authenticatedUser = result.user;
 
-      // Ensure linked student user exists in db.Users if logged in via StudentCode (e.g., 6386, 6648)
-      setDb((prev) => {
-        const exists = prev.Users.some((u) => u.UserID === authenticatedUser.UserID);
-        const nextUsers = exists
-          ? prev.Users.map((u) =>
-              u.UserID === authenticatedUser.UserID ? { ...u, LastLoginAt: now } : u
-            )
-          : [...prev.Users, { ...authenticatedUser, LastLoginAt: now }];
-
-        return {
-          ...prev,
-          Users: nextUsers,
-          AuditLogs: [
-            {
-              LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-              UserID: authenticatedUser.UserID,
-              Action: 'AUTH_LOGIN_SUCCESS',
-              Module: 'Authentication.gs',
-              RecordID: authenticatedUser.UserID,
-              OldValueJSON: '{}',
-              NewValueJSON: JSON.stringify({
-                identifier,
-                role: result.role?.RoleName,
-                portalRoute: result.portalRoute,
-              }),
-              Timestamp: now,
-              IPOrSessionReference: result.sessionToken || 'GAS-AUTH-SESSION',
-              Description: `Authenticated ${authenticatedUser.FullNameKh} (${authenticatedUser.Username}) via SHA-256 + Salt`,
-            },
-            ...prev.AuditLogs,
-          ],
-        };
+      DataService.commitState(setDb, (prev) => {
+        const exists = Boolean(DataService.findById(prev, 'Users', authenticatedUser.UserID));
+        const userResult = exists
+          ? DataService.updateRecord(prev, 'Users', authenticatedUser.UserID, {
+              LastLoginAt: now,
+            })
+          : DataService.createRecord(prev, 'Users', {
+              ...authenticatedUser,
+              LastLoginAt: now,
+            });
+        const workingDb = userResult.ok ? userResult.db : prev;
+        return DataService.appendAuditLog(workingDb, {
+          UserID: authenticatedUser.UserID,
+          Action: 'AUTH_LOGIN_SUCCESS',
+          Module: 'Authentication.gs',
+          RecordID: authenticatedUser.UserID,
+          OldValueJSON: '{}',
+          NewValueJSON: JSON.stringify({
+            identifier,
+            role: result.role?.RoleName,
+            portalRoute: result.portalRoute,
+          }),
+          Timestamp: now,
+          IPOrSessionReference: result.sessionToken || 'GAS-AUTH-SESSION',
+          Description: `Authenticated ${authenticatedUser.FullNameKh} (${authenticatedUser.Username}) via SHA-256 + Salt`,
+        });
       });
 
       setActiveUserId(authenticatedUser.UserID);
@@ -171,24 +166,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         authenticatedAt: now,
       });
     } else {
-      setDb((prev) => ({
-        ...prev,
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: activeUserId,
-            Action: 'AUTH_LOGIN_FAILED',
-            Module: 'Authentication.gs',
-            RecordID: identifier || 'UNKNOWN',
-            OldValueJSON: '{}',
-            NewValueJSON: JSON.stringify({ identifier, reason: result.messageEn }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-AUTH-GUARD',
-            Description: `Failed login attempt for identifier "${identifier}": ${result.messageEn}`,
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
+      DataService.commitState(setDb, (prev) =>
+        DataService.appendAuditLog(prev, {
+          UserID: activeUserId,
+          Action: 'AUTH_LOGIN_FAILED',
+          Module: 'Authentication.gs',
+          RecordID: identifier || 'UNKNOWN',
+          OldValueJSON: '{}',
+          NewValueJSON: JSON.stringify({ identifier, reason: result.messageEn }),
+          Timestamp: now,
+          IPOrSessionReference: 'GAS-AUTH-GUARD',
+          Description: `Failed login attempt for identifier "${identifier}": ${result.messageEn}`,
+        })
+      );
     }
 
     return result;
@@ -207,37 +197,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     if (result.ok && result.user && result.role && result.portalRoute && result.sessionToken) {
       const authenticatedUser = result.user;
 
-      setDb((prev) => {
-        const exists = prev.Users.some((u) => u.UserID === authenticatedUser.UserID);
-        const nextUsers = exists
-          ? prev.Users.map((u) =>
-              u.UserID === authenticatedUser.UserID ? { ...u, LastLoginAt: now } : u
-            )
-          : [...prev.Users, { ...authenticatedUser, LastLoginAt: now }];
-
-        return {
-          ...prev,
-          Users: nextUsers,
-          AuditLogs: [
-            {
-              LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-              UserID: authenticatedUser.UserID,
-              Action: 'AUTH_STUDENT_ID_LOGIN_SUCCESS',
-              Module: 'Authentication.gs',
-              RecordID: result.studentProfile?.StudentID || authenticatedUser.UserID,
-              OldValueJSON: '{}',
-              NewValueJSON: JSON.stringify({
-                studentCode: result.studentProfile?.StudentCode,
-                role: result.role?.RoleName,
-                portalRoute: result.portalRoute,
-              }),
-              Timestamp: now,
-              IPOrSessionReference: result.sessionToken || 'GAS-STUDENT-ID-AUTH',
-              Description: `Verified Student ID #${result.studentProfile?.StudentCode} (${authenticatedUser.FullNameKh}) and routed to STUDENT_PORTAL`,
-            },
-            ...prev.AuditLogs,
-          ],
-        };
+      DataService.commitState(setDb, (prev) => {
+        const exists = Boolean(DataService.findById(prev, 'Users', authenticatedUser.UserID));
+        const userResult = exists
+          ? DataService.updateRecord(prev, 'Users', authenticatedUser.UserID, {
+              LastLoginAt: now,
+            })
+          : DataService.createRecord(prev, 'Users', {
+              ...authenticatedUser,
+              LastLoginAt: now,
+            });
+        const workingDb = userResult.ok ? userResult.db : prev;
+        return DataService.appendAuditLog(workingDb, {
+          UserID: authenticatedUser.UserID,
+          Action: 'AUTH_STUDENT_ID_LOGIN_SUCCESS',
+          Module: 'Authentication.gs',
+          RecordID: result.studentProfile?.StudentID || authenticatedUser.UserID,
+          OldValueJSON: '{}',
+          NewValueJSON: JSON.stringify({
+            studentCode: result.studentProfile?.StudentCode,
+            role: result.role?.RoleName,
+            portalRoute: result.portalRoute,
+          }),
+          Timestamp: now,
+          IPOrSessionReference: result.sessionToken || 'GAS-STUDENT-ID-AUTH',
+          Description: `Verified Student ID #${result.studentProfile?.StudentCode} (${authenticatedUser.FullNameKh}) and routed to STUDENT_PORTAL`,
+        });
       });
 
       setActiveUserId(authenticatedUser.UserID);
@@ -249,27 +234,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         authenticatedAt: now,
       });
     } else {
-      setDb((prev) => ({
-        ...prev,
-        AuditLogs: [
-          {
-            LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-            UserID: activeUserId,
-            Action: 'AUTH_STUDENT_ID_LOGIN_FAILED',
-            Module: 'Authentication.gs',
-            RecordID: studentIdInput.trim() || 'EMPTY_STUDENT_ID',
-            OldValueJSON: '{}',
-            NewValueJSON: JSON.stringify({
-              studentIdInput: studentIdInput.trim(),
-              reason: result.messageEn,
-            }),
-            Timestamp: now,
-            IPOrSessionReference: 'GAS-STUDENT-ID-GUARD',
-            Description: `Failed Student ID login attempt for "${studentIdInput.trim()}": ${result.messageEn}`,
-          },
-          ...prev.AuditLogs,
-        ],
-      }));
+      DataService.commitState(setDb, (prev) =>
+        DataService.appendAuditLog(prev, {
+          UserID: activeUserId,
+          Action: 'AUTH_STUDENT_ID_LOGIN_FAILED',
+          Module: 'Authentication.gs',
+          RecordID: studentIdInput.trim() || 'EMPTY_STUDENT_ID',
+          OldValueJSON: '{}',
+          NewValueJSON: JSON.stringify({
+            studentIdInput: studentIdInput.trim(),
+            reason: result.messageEn,
+          }),
+          Timestamp: now,
+          IPOrSessionReference: 'GAS-STUDENT-ID-GUARD',
+          Description: `Failed Student ID login attempt for "${studentIdInput.trim()}": ${result.messageEn}`,
+        })
+      );
     }
 
     return result;
@@ -277,8 +257,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 
   const createUserWithHashedPassword = (payload: CreateUserPayload): UserRecord => {
     const now = new Date().toISOString();
-    const randomSuffix = String(db.Users.length + 1).padStart(2, '0');
-    const userId = `USR-NEW-${randomSuffix}`;
+    let seq = db.Users.length + 1;
+    let randomSuffix = String(seq).padStart(2, '0');
+    let userId = `USR-NEW-${randomSuffix}`;
+    while (DataService.findById(db, 'Users', userId)) {
+      seq += 1;
+      randomSuffix = String(seq).padStart(2, '0');
+      userId = `USR-NEW-${randomSuffix}`;
+    }
     const salt = `SALT-TC-2026-${randomSuffix}`;
     const passwordHash = hashPasswordSha256(payload.rawPassword, salt);
 
@@ -300,12 +286,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       LastLoginAt: now,
     };
 
-    setDb((prev) => ({
-      ...prev,
-      Users: [newUser, ...prev.Users],
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.createRecord(prev, 'Users', newUser, {
+        position: 'PREPEND',
+        auditLog: {
           UserID: activeUserId,
           Action: 'CREATE_USER_SHA256',
           Module: 'UserService.gs',
@@ -320,34 +304,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
           IPOrSessionReference: 'GAS-USER-SVC',
           Description: `Created user ${newUser.FullNameKh} (${newUser.Username}) with salted SHA-256 hash`,
         },
-        ...prev.AuditLogs,
-      ],
-    }));
+      });
+      return res.ok ? res.db : prev;
+    });
 
     return newUser;
   };
 
   const toggleUserStatus = (userId: string) => {
     const now = new Date().toISOString();
-    setDb((prev) => ({
-      ...prev,
-      Users: prev.Users.map((u) =>
-        u.UserID === userId
-          ? {
-              ...u,
-              Status: u.Status === 'ACTIVE' ? ('INACTIVE' as const) : ('ACTIVE' as const),
-              UpdatedAt: now,
-            }
-          : u
-      ),
-    }));
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.updateRecord(prev, 'Users', userId, (u) => ({
+        ...u,
+        Status: u.Status === 'ACTIVE' ? ('INACTIVE' as const) : ('ACTIVE' as const),
+        UpdatedAt: now,
+      }));
+      return res.ok ? res.db : prev;
+    });
   };
 
   const assignTeacherSubject = (
     payload: AssignTeacherSubjectPayload
   ): TeacherSubjectAssignmentRecord => {
     const now = new Date().toISOString();
-    const newAssignment: TeacherSubjectAssignmentRecord = {
+    const preCheck = DataService.assignTeacherSubjectRecord(
+      db,
+      { ...payload, assignmentIdPrefix: 'TSA' },
+      activeUserId
+    );
+
+    const fallbackAssignment: TeacherSubjectAssignmentRecord = preCheck.record || {
       AssignmentID: `TSA-${String(db.TeacherSubjectAssignments.length + 1).padStart(2, '0')}`,
       TeacherID: payload.teacherId,
       SubjectID: payload.subjectId,
@@ -358,53 +344,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       AssignedAt: now,
     };
 
-    setDb((prev) => ({
-      ...prev,
-      TeacherSubjectAssignments: [newAssignment, ...prev.TeacherSubjectAssignments],
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: activeUserId,
-          Action: 'ASSIGN_TEACHER_SUBJECT',
-          Module: 'TeacherAssignmentService.gs',
-          RecordID: newAssignment.AssignmentID,
-          OldValueJSON: '{}',
-          NewValueJSON: JSON.stringify(newAssignment),
-          Timestamp: now,
-          IPOrSessionReference: 'GAS-ASSIGNMENT-SVC',
-          Description: `Assigned TeacherID=${payload.teacherId} to SubjectID=${payload.subjectId} (${payload.classId})`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+    DataService.commitState(setDb, (prev) => {
+      const res = DataService.assignTeacherSubjectRecord(
+        prev,
+        { ...payload, assignmentIdPrefix: 'TSA' },
+        activeUserId
+      );
+      return res.ok ? res.db : prev;
+    });
 
-    return newAssignment;
+    return fallbackAssignment;
   };
 
   const logout = () => {
     const now = new Date().toISOString();
     const userToLogout = currentSession.user;
-    setDb((prev) => ({
-      ...prev,
-      AuditLogs: [
-        {
-          LogID: `LOG-${String(prev.AuditLogs.length + 1).padStart(4, '0')}`,
-          UserID: userToLogout.UserID,
-          Action: 'AUTH_LOGOUT',
-          Module: 'Authentication.gs',
-          RecordID: userToLogout.UserID,
-          OldValueJSON: JSON.stringify({
-            sessionToken: currentSession.sessionToken,
-            role: currentSession.role.RoleName,
-          }),
-          NewValueJSON: '{}',
-          Timestamp: now,
-          IPOrSessionReference: currentSession.sessionToken,
-          Description: `User ${userToLogout.FullNameKh} (${userToLogout.Username}) logged out of ${currentSession.portalRoute}`,
-        },
-        ...prev.AuditLogs,
-      ],
-    }));
+    DataService.commitState(setDb, (prev) =>
+      DataService.appendAuditLog(prev, {
+        UserID: userToLogout.UserID,
+        Action: 'AUTH_LOGOUT',
+        Module: 'Authentication.gs',
+        RecordID: userToLogout.UserID,
+        OldValueJSON: JSON.stringify({
+          sessionToken: currentSession.sessionToken,
+          role: currentSession.role.RoleName,
+        }),
+        NewValueJSON: '{}',
+        Timestamp: now,
+        IPOrSessionReference: currentSession.sessionToken,
+        Description: `User ${userToLogout.FullNameKh} (${userToLogout.Username}) logged out of ${currentSession.portalRoute}`,
+      })
+    );
     setLastAuthOverride(null);
     if (onLogout) {
       onLogout();

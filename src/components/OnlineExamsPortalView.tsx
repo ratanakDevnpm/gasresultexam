@@ -24,6 +24,7 @@ import {
   StudentSubmittedAnswerInput,
   toKhmerNumerals,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import {
   ACADEMIC_MONTH_TABS,
   ALL_SUPPORTED_QUESTION_MONTHS,
@@ -650,7 +651,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Exams: prev.Exams.map((e) =>
           e.ExamID === currentExam.ExamID
@@ -695,10 +696,10 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
 
         setDeletedExamIds((prev) => [...prev, examToDelete.ExamID]);
         if (setDb) {
-          setDb((prev) => ({
-            ...prev,
-            Exams: prev.Exams.filter((e) => e.ExamID !== examToDelete.ExamID),
-          }));
+          DataService.commitState(setDb, (prev) => {
+            const res = DataService.deleteRecord(prev, 'Exams', examToDelete.ExamID);
+            return res.ok ? res.db : prev;
+          });
         }
         if (nextExamId) {
           setSelectedExamId(nextExamId);
@@ -745,7 +746,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     );
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: prev.Questions.map((q) =>
           q.QuestionID === questionId ? updater(q) : q
@@ -816,7 +817,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: [...prev.Questions, newQ],
         Exams: prev.Exams.map((ex) =>
@@ -878,7 +879,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: [...prev.Questions, dupRecord],
         Exams: prev.Exams.map((ex) =>
@@ -937,7 +938,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     );
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: prev.Questions.map((item) =>
           item.QuestionID === q.QuestionID ? { ...item, Status: 'DELETED' as const } : item
@@ -996,7 +997,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Exams: prev.Exams.map((ex) =>
           ex.ExamID === currentExam.ExamID
@@ -1107,14 +1108,13 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
         },
       }));
       if (setDb) {
-        setDb((prev) => ({
-          ...prev,
-          Exams: prev.Exams.map((e) =>
-            e.ExamID === created.ExamID
-              ? { ...e, ClassID: primaryClassId, ClassIDs: teacherAllowedClassesForSub }
-              : e
-          ),
-        }));
+        DataService.commitState(setDb, (prev) => {
+          const res = DataService.updateRecord(prev, 'Exams', created.ExamID, {
+            ClassID: primaryClassId,
+            ClassIDs: teacherAllowedClassesForSub,
+          });
+          return res.ok ? res.db : prev;
+        });
       }
     }
 
@@ -1198,14 +1198,13 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
-        ...prev,
-        Exams: prev.Exams.map((ex) =>
-          ex.ExamID === currentExam.ExamID
-            ? { ...ex, QuestionIDs: mergedIds, UpdatedAt: now }
-            : ex
-        ),
-      }));
+      DataService.commitState(setDb, (prev) => {
+        const res = DataService.updateRecord(prev, 'Exams', currentExam.ExamID, {
+          QuestionIDs: mergedIds,
+          UpdatedAt: now,
+        });
+        return res.ok ? res.db : prev;
+      });
     }
 
     setIsQuestionBankPickerOpen(false);
@@ -1382,7 +1381,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
       }));
 
       if (setDb) {
-        setDb((prev) => ({
+        DataService.commitState(setDb, (prev) => ({
           ...prev,
           Questions: [...prev.Questions, ...mapped.questionRecords],
           Exams: [createdExamRecord, ...prev.Exams],
@@ -1423,7 +1422,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: [...prev.Questions, ...mapped.questionRecords],
         Exams: prev.Exams.map((ex) =>
@@ -1626,7 +1625,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     }));
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         ExamAnswers: nextAnswers,
         ExamAttempts: prev.ExamAttempts.map((att) =>
@@ -1706,7 +1705,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
     setLocalAttemptStatusOverrides(nextOverrides);
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         ExamAnswers: nextAnswers,
         ExamAttempts: prev.ExamAttempts.map((att) => {
@@ -1740,7 +1739,7 @@ export const OnlineExamsPortalView: React.FC<OnlineExamsPortalViewProps> = ({
 
     const now = new Date().toISOString();
     if (setDb) {
-      setDb((prev) => {
+      DataService.commitState(setDb, (prev) => {
         const scoreByStudent = new Map<string, number>();
         examAttemptsList.forEach((att) => {
           scoreByStudent.set(att.StudentID, att.TotalScore);

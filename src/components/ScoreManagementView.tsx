@@ -14,6 +14,7 @@ import {
   transitionScoreSubmissionWorkflow,
   upsertStudentSubjectScoreAndRecalculate,
 } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { ReportTemplateTab } from './OfficialReportsView';
 import { evaluateSubjectGradeFromRanges } from '../lib/subjectGradeRanges';
 import { SubjectGradesAndRankingsSheet } from './SubjectGradesAndRankingsSheet';
@@ -264,7 +265,7 @@ export const ScoreManagementView: React.FC<ScoreManagementViewProps> = ({
       return;
     }
 
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setFeedbackBanner({ type: 'SUCCESS', messageKh: res.messageKh });
   };
 
@@ -292,7 +293,7 @@ export const ScoreManagementView: React.FC<ScoreManagementViewProps> = ({
       return;
     }
 
-    setDb(res.updatedDb);
+    DataService.commitState(setDb, res.updatedDb);
     setFeedbackBanner({ type: 'SUCCESS', messageKh: res.messageKh });
   };
 

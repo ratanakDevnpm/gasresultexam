@@ -10,6 +10,7 @@ import {
   TeacherSubjectAssignmentRecord,
 } from '../types/database';
 import { canManageQuestion } from '../lib/domainRules';
+import { DataService } from '../lib/centralizedDataService';
 import { HONOR_PORTRAIT_URLS } from '../lib/seedData';
 import { Toast } from './ui';
 import {
@@ -663,7 +664,7 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
       setLocalQuestions((prev) => prev.map(updater));
       if (setDb) {
-        setDb((prev) => ({
+        DataService.commitState(setDb, (prev) => ({
           ...prev,
           Questions: prev.Questions.map(updater),
         }));
@@ -720,10 +721,12 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
       setLocalQuestions((prev) => [newQuestion, ...prev]);
       if (setDb) {
-        setDb((prev) => ({
-          ...prev,
-          Questions: [newQuestion, ...prev.Questions],
-        }));
+        DataService.commitState(setDb, (prev) => {
+          const created = DataService.createRecord(prev, 'Questions', newQuestion, {
+            position: 'PREPEND',
+          });
+          return created.ok ? created.db : prev;
+        });
       }
 
       setToastBanner({
@@ -780,10 +783,12 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
     setLocalQuestions((prev) => [copyQuestion, ...prev]);
     if (setDb) {
-      setDb((prev) => ({
-        ...prev,
-        Questions: [copyQuestion, ...prev.Questions],
-      }));
+      DataService.commitState(setDb, (prev) => {
+        const created = DataService.createRecord(prev, 'Questions', copyQuestion, {
+          position: 'PREPEND',
+        });
+        return created.ok ? created.db : prev;
+      });
     }
 
     setToastBanner({
@@ -958,7 +963,7 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
     };
 
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Exams: [newExam, ...prev.Exams],
       }));
@@ -998,7 +1003,7 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
     setLocalQuestions((prev) => [...clonedQuestions, ...prev]);
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: [...clonedQuestions, ...prev.Questions],
       }));
@@ -1097,7 +1102,7 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
     setLocalQuestions((prev) => [...importedClones, ...prev]);
 
     if (setDb) {
-      setDb((prev) => {
+      DataService.commitState(setDb, (prev) => {
         const nextExams =
           importDestExamId !== 'NONE'
             ? prev.Exams.map((ex) =>
@@ -1246,7 +1251,7 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
     setLocalQuestions((prev) => [...createdBatch, ...prev]);
     if (setDb) {
-      setDb((prev) => ({
+      DataService.commitState(setDb, (prev) => ({
         ...prev,
         Questions: [...createdBatch, ...prev.Questions],
       }));
@@ -1309,10 +1314,15 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
       setLocalSubjects((prev) => prev.map(updater));
       if (setDb) {
-        setDb((prev) => ({
-          ...prev,
-          Subjects: prev.Subjects.map(updater),
-        }));
+        DataService.commitState(setDb, (prev) => {
+          const res = DataService.updateRecord(
+            prev,
+            'Subjects',
+            editingSubject.SubjectID,
+            updater
+          );
+          return res.ok ? res.db : prev;
+        });
       }
 
       setToastBanner({
@@ -1338,10 +1348,10 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
 
       setLocalSubjects((prev) => [...prev, createdSub]);
       if (setDb) {
-        setDb((prev) => ({
-          ...prev,
-          Subjects: [...prev.Subjects, createdSub],
-        }));
+        DataService.commitState(setDb, (prev) => {
+          const res = DataService.createRecord(prev, 'Subjects', createdSub);
+          return res.ok ? res.db : prev;
+        });
       }
 
       setSelectedSubjectId(newSubId);
@@ -1363,12 +1373,12 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
       )
     );
     if (setDb) {
-      setDb((prev) => ({
-        ...prev,
-        Subjects: prev.Subjects.map((s) =>
-          s.SubjectID === sub.SubjectID ? { ...s, Status: 'INACTIVE' as const } : s
-        ),
-      }));
+      DataService.commitState(setDb, (prev) => {
+        const res = DataService.updateRecord(prev, 'Subjects', sub.SubjectID, {
+          Status: 'INACTIVE',
+        });
+        return res.ok ? res.db : prev;
+      });
     }
     setSelectedSubjectId('ALL');
     setIsSubjectModalOpen(false);
@@ -1383,24 +1393,33 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
   const handleAssignTeacherSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSuperOrAdmin) return;
-    const now = new Date().toISOString();
-    const newAsn: TeacherSubjectAssignmentRecord = {
-      AssignmentID: `ASN-2526-${String(localAssignments.length + 1).padStart(2, '0')}`,
-      TeacherID: assignTeacherId,
-      SubjectID: assignSubjectId,
-      ClassID: assignClassId,
-      AcademicYearID: 'AY-2025-2026',
-      AssignedByUserID: activeUser.UserID,
-      AssignedAt: now,
-      Status: 'ACTIVE',
-    };
 
+    const assignRes = DataService.assignTeacherSubjectRecord(
+      db,
+      {
+        teacherId: assignTeacherId,
+        subjectId: assignSubjectId,
+        classId: assignClassId,
+        academicYearId: 'AY-2025-2026',
+      },
+      activeUser.UserID
+    );
+
+    if (!assignRes.ok || !assignRes.record) {
+      setToastBanner({
+        tone: 'danger',
+        title: 'បដិសេធការចាត់តាំងស្ទួន (Duplicate Assignment Prevented)',
+        description:
+          assignRes.errorMessageKh ||
+          'ការចាត់តាំងគ្រូសម្រាប់មុខវិជ្ជា និងឆ្នាំសិក្សានេះមានរួចហើយ។',
+      });
+      return;
+    }
+
+    const newAsn = assignRes.record;
     setLocalAssignments((prev) => [newAsn, ...prev]);
     if (setDb) {
-      setDb((prev) => ({
-        ...prev,
-        TeacherSubjectAssignments: [newAsn, ...prev.TeacherSubjectAssignments],
-      }));
+      DataService.commitState(setDb, assignRes.db);
     }
 
     const teacherObj = db.Users.find((u) => u.UserID === assignTeacherId);
@@ -1417,12 +1436,14 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
     if (!isSuperOrAdmin) return;
     setLocalAssignments((prev) => prev.filter((a) => a.AssignmentID !== assignmentId));
     if (setDb) {
-      setDb((prev) => ({
-        ...prev,
-        TeacherSubjectAssignments: prev.TeacherSubjectAssignments.filter(
-          (a) => a.AssignmentID !== assignmentId
-        ),
-      }));
+      DataService.commitState(setDb, (prev) => {
+        const res = DataService.deleteRecord(
+          prev,
+          'TeacherSubjectAssignments',
+          assignmentId
+        );
+        return res.ok ? res.db : prev;
+      });
     }
     setToastBanner({
       tone: 'info',
