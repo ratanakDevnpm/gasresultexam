@@ -1076,17 +1076,18 @@ export const DatabaseExplorerView: React.FC<DatabaseExplorerViewProps> = ({
       {/* ===================================================================== */}
       <div className="no-print bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs">
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-          {/* Left Side Title & Subtitle */}
+          {/* Left Side Short Title according to active view */}
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-indigo-600 font-semibold mb-1 whitespace-nowrap">
-              <span>វិទ្យាល័យទឹកជោរ</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono-tabular">ឆ្នាំសិក្សា ២០២៥–២០២៦</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono-tabular">{db.Classes.length} ថ្នាក់ (7A–12C)</span>
-            </div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
-              បញ្ជីសិស្សសរុបទាំង ១៧ ថ្នាក់ (៣៦ ជួរឈរ)
+              {subTab === 'MASTER_36_ROSTER' || selectedSheetName === 'Students'
+                ? 'បញ្ជីសិស្ស'
+                : selectedSheetName === 'Classes'
+                  ? 'បញ្ជីថ្នាក់រៀន'
+                  : selectedSheetName === 'AcademicYears'
+                    ? 'គ្រប់គ្រងឆ្នាំសិក្សា'
+                    : selectedSheetName === 'Semesters'
+                      ? 'ឆមាស និងខែសិក្សា'
+                      : selectedSheetSchema.khmerTitle}
             </h2>
           </div>
 

@@ -135,10 +135,10 @@ export const GasArchitectureView: React.FC = () => {
           </div>
           <div className="divide-y divide-slate-100 max-h-[620px] overflow-y-auto">
             {GAS_BACKEND_MODULES.map((mod) => {
-              const isSelected = mod.id === selectedModule.id;
+              const isSelected = mod.filename === selectedModule.filename;
               return (
                 <button
-                  key={mod.id}
+                  key={`${mod.id}-${mod.filename}`}
                   type="button"
                   onClick={() => setSelectedModule(mod)}
                   className={`w-full text-left px-4 py-3 transition-colors flex items-start justify-between gap-2 cursor-pointer ${

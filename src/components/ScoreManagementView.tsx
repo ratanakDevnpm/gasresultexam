@@ -357,24 +357,22 @@ export const ScoreManagementView: React.FC<ScoreManagementViewProps> = ({
       {/* Top Module Header & Role Scope Banner */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/80 text-xs font-bold font-khmer-body">
-                <BarChart3 className="w-3.5 h-3.5" />
-                ម៉ូឌុលឯករាជ្យទី ២ • SCORE MANAGEMENT
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold font-khmer-body">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                តួនាទី៖ {scope.roleSummary.effectiveRoles.join(' + ')}
-              </span>
-              {renderStatusBadge(submissionRecord.Status)}
-            </div>
-            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-khmer-moul mt-1">
-              គ្រប់គ្រងពិន្ទុ (Score Management)
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
+              {activeSubMenu === 'SCORE_EDITING'
+                ? 'ការកែប្រែពិន្ទុ'
+                : activeSubMenu === 'SCORES_BY_CLASS'
+                  ? 'គ្រប់គ្រងពិន្ទុប្រចាំខែ'
+                  : activeSubMenu === 'SCORES_BY_SUBJECT'
+                    ? 'គ្រប់គ្រងពិន្ទុប្រចាំឆមាស'
+                    : activeSubMenu === 'MISSING_SCORE_MONITORING'
+                      ? 'ការផ្ទៀងផ្ទាត់ពិន្ទុ'
+                      : activeSubMenu === 'SCORE_SUBMISSION_STATUS'
+                        ? 'ការអនុម័តពិន្ទុ'
+                        : activeSubMenu === 'SCORE_MODIFICATION_HISTORY'
+                          ? 'ប្រវត្តិកែប្រែពិន្ទុ'
+                          : 'ការបញ្ចូលពិន្ទុ'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 font-khmer-body">
-              បញ្ចូលពិន្ទុ កែប្រែពិន្ទុ ពិនិត្យបញ្ជីពិន្ទុតាមថ្នាក់ និងមុខវិជ្ជា តាមដានពិន្ទុមិនទាន់បញ្ចូល ស្ថានភាពការបញ្ជូន និងប្រវត្តិនៃការកែប្រែពិន្ទុ។
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">

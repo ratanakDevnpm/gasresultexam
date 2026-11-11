@@ -288,11 +288,11 @@ export default function App() {
     useState<ReportSubItemId>('STD_INFO');
   const [selectedMainGroupId, setSelectedMainGroupId] =
     useState<FunctionalSidebarGroupId>('GROUP_1_DASHBOARD');
-  const [isSubmenuDataOpen, setIsSubmenuDataOpen] = useState<boolean>(false);
-  const [activeSubmenuKey, setActiveSubmenuKey] = useState<string>('');
+  const [isSubmenuDataOpen, setIsSubmenuDataOpen] = useState<boolean>(true);
+  const [activeSubmenuKey, setActiveSubmenuKey] = useState<string>('G1_MAIN_DASHBOARD');
   const [activeChildMenuKey, setActiveChildMenuKey] = useState<string>('');
-  const [breadcrumbGroupKh, setBreadcrumbGroupKh] = useState<string>('១. ផ្ទាំងគ្រប់គ្រង');
-  const [breadcrumbItemKh, setBreadcrumbItemKh] = useState<string>('សូមជ្រើសរើសមុខងាររង');
+  const [breadcrumbGroupKh, setBreadcrumbGroupKh] = useState<string>('ផ្ទាំងគ្រប់គ្រង');
+  const [breadcrumbItemKh, setBreadcrumbItemKh] = useState<string>('ទំព័រដើមរួម');
 
   // Expandable/Collapsible State for the 9 Functional Sidebar Groups
   const [openSidebarGroups, setOpenSidebarGroups] = useState<
@@ -461,8 +461,8 @@ export default function App() {
       setSelectedMainGroupId('GROUP_1_DASHBOARD');
       setDashboardSubMode('MAIN_DASHBOARD');
       setActiveSubmenuKey('G1_MAIN_DASHBOARD');
-      setBreadcrumbGroupKh('១. ផ្ទាំងគ្រប់គ្រង (Dashboard)');
-      setBreadcrumbItemKh('ទំព័រដើមរួម (Main Dashboard)');
+      setBreadcrumbGroupKh('ផ្ទាំងគ្រប់គ្រង');
+      setBreadcrumbItemKh('ទំព័រដើមរួម');
     } else if (navId === 'STUDENT_TAKE_EXAM') {
       setStudentPortalTab('AVAILABLE_EXAMS');
     } else if (navId === 'STUDENT_VIEW_RESULTS') {
@@ -472,71 +472,107 @@ export default function App() {
       setDbTargetSheet('Students');
       setDbTargetSubTab('MASTER_36_ROSTER');
       setActiveSubmenuKey('G2_STUDENT_LIST');
-      setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+      setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
       setBreadcrumbItemKh('បញ្ជីសិស្ស (Student List)');
     } else if (navId === 'TEACHERS') {
       setSelectedMainGroupId('GROUP_2_BASIC_DATA');
       setActiveSubmenuKey('G2_TEACHER_LIST');
-      setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+      setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
       setBreadcrumbItemKh('បញ្ជីគ្រូ (Teacher List)');
     } else if (navId === 'CLASSES') {
       setSelectedMainGroupId('GROUP_2_BASIC_DATA');
       setDbTargetSheet('Classes');
       setDbTargetSubTab('LIVE_DATA');
       setActiveSubmenuKey('G2_CLASS_MANAGEMENT');
-      setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+      setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
       setBreadcrumbItemKh('គ្រប់គ្រងថ្នាក់រៀន (Class Management)');
     } else if (navId === 'SUBJECT_MANAGEMENT') {
       setSelectedMainGroupId('GROUP_3_SUBJECT_MANAGEMENT');
       setActiveSubjectSubMenu('SUBJECT_LIST');
       setActiveSubmenuKey('G3_SUBJECT_LIST');
-      setBreadcrumbGroupKh('៣. គ្រប់គ្រងមុខវិជ្ជា');
+      setBreadcrumbGroupKh('គ្រប់គ្រងមុខវិជ្ជា');
       setBreadcrumbItemKh('បញ្ជីមុខវិជ្ជា (Subject List)');
     } else if (navId === 'ONLINE_EXAMS') {
       setSelectedMainGroupId('GROUP_4_ONLINE_EXAMINATION');
       setOnlineExamInitialTab('QUESTIONS_BUILDER');
       setOnlineExamSelectorOpen(true);
       setActiveSubmenuKey('G4_EXAM_MANAGEMENT');
-      setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+      setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
       setBreadcrumbItemKh('គ្រប់គ្រងវិញ្ញាសាប្រឡង (Examination Management)');
     } else if (navId === 'SUBJECTS_QUESTIONS') {
       setSelectedMainGroupId('GROUP_4_ONLINE_EXAMINATION');
       setActiveSubmenuKey('G4_QUESTION_BANK');
-      setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+      setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
       setBreadcrumbItemKh('ឃ្លាំងសំណួរ (Question Bank)');
     } else if (navId === 'SCORE_MANAGEMENT') {
       setSelectedMainGroupId('GROUP_5_SCORE_MANAGEMENT');
       setActiveScoreSubMenu('SCORE_ENTRY');
       setActiveSubmenuKey('G5_SCORE_ENTRY');
-      setBreadcrumbGroupKh('៥. គ្រប់គ្រងពិន្ទុ');
+      setBreadcrumbGroupKh('គ្រប់គ្រងពិន្ទុ');
       setBreadcrumbItemKh('ការបញ្ចូលពិន្ទុ (Score Entry)');
     } else if (navId === 'SCORES_RANKING') {
       setSelectedMainGroupId('GROUP_6_RESULTS_RANKINGS');
       setReportTargetTemplate('SCORE_ENTRY_GRID');
       setActiveSubmenuKey('G6_SUBJECT_GRADES');
-      setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+      setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
       setBreadcrumbItemKh('តារាងពិន្ទុ និងចំណាត់ថ្នាក់ផ្លូវការ');
     } else if (navId === 'HONOR_ROLL') {
       setSelectedMainGroupId('GROUP_6_RESULTS_RANKINGS');
       setReportTargetTemplate('MONTHLY_HONOR_ROLL');
       setActiveSubmenuKey('G6_OVERALL_RANKINGS');
-      setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+      setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
       setBreadcrumbItemKh('តារាងកិត្តិយស Top 5');
     } else if (navId === 'OFFICIAL_REPORTS') {
       setSelectedMainGroupId('GROUP_6_RESULTS_RANKINGS');
       setReportTargetTemplate('CLASS_ROSTER');
       setActiveSubmenuKey('G6_MONTHLY_RESULTS');
-      setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+      setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
       setBreadcrumbItemKh('របាយការណ៍ផ្លូវការ A4');
     } else if (navId === 'REPORT_CENTER') {
       setSelectedMainGroupId('GROUP_7_REPORTS');
       setActiveSubmenuKey(`G7_${activeReportCategory}`);
-      setBreadcrumbGroupKh('៧. របាយការណ៍ (Report Center)');
+      setBreadcrumbGroupKh('របាយការណ៍');
     } else if (navId === 'SYSTEM_SETTINGS') {
       setSelectedMainGroupId('GROUP_9_SYSTEM_SETTINGS');
+      setSettingsInitialTab('SCHOOL_PROFILE');
       setActiveSubmenuKey('G9_SCHOOL_INFO');
-      setBreadcrumbGroupKh('៩. ការកំណត់ប្រព័ន្ធ');
+      setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
       setBreadcrumbItemKh('ព័ត៌មានសាលារៀន (School Information)');
+    } else if ((navId as string) === 'USER_ACCESS') {
+      setActiveNav('SYSTEM_SETTINGS');
+      setSelectedMainGroupId('GROUP_8_USER_ACCESS');
+      setSettingsInitialTab('ROLES_RBAC');
+      setActiveSubmenuKey('G8_ROLES_PERMISSIONS');
+      setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
+      setBreadcrumbItemKh('តួនាទី និងសិទ្ធិប្រើប្រាស់ (Roles & RBAC)');
+    } else if ((navId as string) === 'AUDIT_LOGS') {
+      setActiveNav('SYSTEM_SETTINGS');
+      setSelectedMainGroupId('GROUP_8_USER_ACCESS');
+      setSettingsInitialTab('AUDIT_LOGS');
+      setActiveSubmenuKey('G8_ACTIVITY_LOGS');
+      setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
+      setBreadcrumbItemKh('កំណត់ហេតុសកម្មភាព (Audit Logs)');
+    } else if ((navId as string) === 'BACKUP_STATUS') {
+      setActiveNav('SYSTEM_SETTINGS');
+      setSelectedMainGroupId('GROUP_9_SYSTEM_SETTINGS');
+      setSettingsInitialTab('BACKUP_RESET');
+      setActiveSubmenuKey('G9_SCHOOL_INFO');
+      setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
+      setBreadcrumbItemKh('ការបម្រុងទុក និងសុវត្ថិភាពទិន្នន័យ (Backup & Protection)');
+    } else if ((navId as string) === 'DATABASE_STATUS') {
+      setActiveNav('SYSTEM_SETTINGS');
+      setSelectedMainGroupId('GROUP_9_SYSTEM_SETTINGS');
+      setSettingsInitialTab('DATABASE_STATUS');
+      setActiveSubmenuKey('G9_SCHOOL_INFO');
+      setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
+      setBreadcrumbItemKh('ស្ថានភាពតារាងទិន្នន័យ (Database Status)');
+    } else if ((navId as string) === 'GAS_ENDPOINT') {
+      setActiveNav('SYSTEM_SETTINGS');
+      setSelectedMainGroupId('GROUP_9_SYSTEM_SETTINGS');
+      setSettingsInitialTab('GAS_ENDPOINT');
+      setActiveSubmenuKey('G9_SCHOOL_INFO');
+      setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
+      setBreadcrumbItemKh('ស្ថាបត្យកម្មម៉ាស៊ីនមេ (GAS Backend)');
     }
   };
 
@@ -851,155 +887,19 @@ export default function App() {
     {
       id: 'GROUP_1_DASHBOARD' as FunctionalSidebarGroupId,
       code: '1',
-      titleKh: '១. ផ្ទាំងគ្រប់គ្រង',
+      titleKh: 'ផ្ទាំងគ្រប់គ្រង',
       titleEn: 'GROUP 1: DASHBOARD',
       icon: Home,
       accentText: 'text-blue-400',
       visible: !isCurrentUserStudent,
       isActiveGroup:
         activeNav !== 'STUDENT_PORTAL' && selectedMainGroupId === 'GROUP_1_DASHBOARD',
-      items: [
-        {
-          key: 'G1_MAIN_DASHBOARD',
-          labelKh: 'ទំព័រដើមរួម',
-          icon: LayoutDashboard,
-          onClick: () => {
-            setDashboardSubMode('MAIN_DASHBOARD');
-            setActiveSubmenuKey('G1_MAIN_DASHBOARD');
-            setBreadcrumbGroupKh('១. ផ្ទាំងគ្រប់គ្រង');
-            setBreadcrumbItemKh('ទំព័រដើមរួម');
-            setActiveNav('DASHBOARD');
-            setIsMobileDrawerOpen(false);
-          },
-          children: [
-            {
-              key: 'G1_C1_SCHOOL_OVERVIEW',
-              labelKh: 'ទិដ្ឋភាពរួមតាមតួនាទី និងសិទ្ធិ',
-              icon: LayoutDashboard,
-              onClick: () => {
-                setDashboardSubMode('MAIN_DASHBOARD');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G1_C2_TOP_HONOR_ROLL',
-              labelKh: 'ផ្ទាំងគ្រប់គ្រងសម្រាប់គ្រូបន្ទុកថ្នាក់',
-              icon: Award,
-              onClick: () => {
-                setDashboardSubMode('MAIN_DASHBOARD');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G1_C3_HOMEROOM_ROSTER',
-              labelKh: 'ផ្ទាំងគ្រប់គ្រងសម្រាប់គ្រូមុខវិជ្ជា',
-              icon: BookOpen,
-              onClick: () => {
-                setDashboardSubMode('MAIN_DASHBOARD');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-          ],
-        },
-        {
-          key: 'G1_ACADEMIC_STATS',
-          labelKh: 'ស្ថិតិសិក្សា',
-          icon: BarChart3,
-          onClick: () => {
-            setDashboardSubMode('ACADEMIC_STATISTICS');
-            setActiveSubmenuKey('G1_ACADEMIC_STATS');
-            setBreadcrumbGroupKh('១. ផ្ទាំងគ្រប់គ្រង');
-            setBreadcrumbItemKh('ស្ថិតិសិក្សា');
-            setActiveNav('DASHBOARD');
-            setIsMobileDrawerOpen(false);
-          },
-          children: [
-            {
-              key: 'G1_C4_STATS_BY_GRADE',
-              labelKh: 'ស្ថិតិសិស្សតាមកម្រិតថ្នាក់',
-              icon: BarChart3,
-              onClick: () => {
-                setDashboardSubMode('ACADEMIC_STATISTICS');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G1_C5_GENDER_SOCIAL_STATS',
-              labelKh: 'ស្ថិតិភេទ និងស្ថានភាពសិស្ស',
-              icon: Users,
-              onClick: () => {
-                setDashboardSubMode('ACADEMIC_STATISTICS');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G1_C6_ATTENDANCE_STATS',
-              labelKh: 'ស្ថិតិវត្តមាន និងការសិក្សា',
-              icon: Calendar,
-              onClick: () => {
-                setDashboardSubMode('ACADEMIC_STATISTICS');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-          ],
-        },
-        {
-          key: 'G1_PERFORMANCE_OVERVIEW',
-          labelKh: 'ទិដ្ឋភាពរួមនៃលទ្ធផលសិក្សា',
-          icon: TrendingUp,
-          onClick: () => {
-            setDashboardSubMode('PERFORMANCE_OVERVIEW');
-            setActiveSubmenuKey('G1_PERFORMANCE_OVERVIEW');
-            setBreadcrumbGroupKh('១. ផ្ទាំងគ្រប់គ្រង');
-            setBreadcrumbItemKh('ទិដ្ឋភាពរួមនៃលទ្ធផលសិក្សា');
-            setActiveNav('DASHBOARD');
-            setIsMobileDrawerOpen(false);
-          },
-          children: [
-            {
-              key: 'G1_C7_PASS_FAIL_RATE',
-              labelKh: 'អត្រាជាប់ និងធ្លាក់តាមថ្នាក់',
-              icon: TrendingUp,
-              onClick: () => {
-                setDashboardSubMode('PERFORMANCE_OVERVIEW');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G1_C8_GRADE_DISTRIBUTION',
-              labelKh: 'ការប្រៀបធៀបនិទ្ទេសតាមកម្រិតថ្នាក់',
-              icon: Award,
-              onClick: () => {
-                setDashboardSubMode('PERFORMANCE_OVERVIEW');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G1_C9_SUBJECT_PERFORMANCE',
-              labelKh: 'លទ្ធផលសិក្សាតាមមុខវិជ្ជា',
-              icon: BookOpen,
-              onClick: () => {
-                setDashboardSubMode('PERFORMANCE_OVERVIEW');
-                setActiveNav('DASHBOARD');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-          ],
-        },
-      ],
+      items: [],
     },
     {
       id: 'GROUP_2_BASIC_DATA' as FunctionalSidebarGroupId,
       code: '2',
-      titleKh: '២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន',
+      titleKh: 'គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន',
       titleEn: 'GROUP 2: BASIC DATA MANAGEMENT',
       icon: Database,
       accentText: 'text-indigo-400',
@@ -1015,58 +915,12 @@ export default function App() {
             setDbTargetSheet('Students');
             setDbTargetSubTab('MASTER_36_ROSTER');
             setActiveSubmenuKey('G2_STUDENT_LIST');
-            setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+            setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
             setBreadcrumbItemKh('បញ្ជីសិស្ស');
             setActiveNav('STUDENTS');
             setIsMobileDrawerOpen(false);
           },
-          children: [
-            {
-              key: 'G2_C1_MASTER_STUDENT_ROSTER',
-              labelKh: 'បញ្ជីសិស្សសរុបទាំង ១៧ ថ្នាក់',
-              icon: Users,
-              onClick: () => {
-                setDbTargetSheet('Students');
-                setDbTargetSubTab('MASTER_36_ROSTER');
-                setActiveNav('STUDENTS');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G2_C2_ADD_NEW_STUDENT',
-              labelKh: 'បន្ថែមសិស្សថ្មី',
-              icon: Plus,
-              onClick: () => {
-                setDbTargetSheet('Students');
-                setDbTargetSubTab('MASTER_36_ROSTER');
-                setActiveNav('STUDENTS');
-                setOpenCreateStudentSignal((n) => n + 1);
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G2_C3_IMPORT_EXPORT_STUDENTS',
-              labelKh: 'នាំចូល និងនាំចេញទិន្នន័យសិស្ស',
-              icon: FileSpreadsheet,
-              onClick: () => {
-                setDbTargetSheet('Students');
-                setDbTargetSubTab('MASTER_36_ROSTER');
-                setActiveNav('STUDENTS');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-            {
-              key: 'G2_C4_SOCIAL_STATUS_STUDENTS',
-              labelKh: 'ទិន្នន័យគ្រួសារ និងស្ថានភាពសង្គម',
-              icon: ShieldCheck,
-              onClick: () => {
-                setDbTargetSheet('Students');
-                setDbTargetSubTab('MASTER_36_ROSTER');
-                setActiveNav('STUDENTS');
-                setIsMobileDrawerOpen(false);
-              },
-            },
-          ],
+          children: [],
         },
         {
           key: 'G2_TEACHER_LIST',
@@ -1074,7 +928,7 @@ export default function App() {
           icon: GraduationCap,
           onClick: () => {
             setActiveSubmenuKey('G2_TEACHER_LIST');
-            setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+            setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
             setBreadcrumbItemKh('បញ្ជីគ្រូ');
             setActiveNav('TEACHERS');
             setIsMobileDrawerOpen(false);
@@ -1117,7 +971,7 @@ export default function App() {
             setDbTargetSheet('Classes');
             setDbTargetSubTab('LIVE_DATA');
             setActiveSubmenuKey('G2_CLASS_MANAGEMENT');
-            setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+            setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
             setBreadcrumbItemKh('គ្រប់គ្រងថ្នាក់រៀន');
             setActiveNav('CLASSES');
             setIsMobileDrawerOpen(false);
@@ -1166,7 +1020,7 @@ export default function App() {
             setDbTargetSheet('AcademicYears');
             setDbTargetSubTab('LIVE_DATA');
             setActiveSubmenuKey('G2_ACADEMIC_YEAR');
-            setBreadcrumbGroupKh('២. គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
+            setBreadcrumbGroupKh('គ្រប់គ្រងទិន្នន័យមូលដ្ឋាន');
             setBreadcrumbItemKh('គ្រប់គ្រងឆ្នាំសិក្សា');
             setActiveNav('STUDENTS');
             setIsMobileDrawerOpen(false);
@@ -1211,7 +1065,7 @@ export default function App() {
     {
       id: 'GROUP_3_SUBJECT_MANAGEMENT' as FunctionalSidebarGroupId,
       code: '3',
-      titleKh: '៣. គ្រប់គ្រងមុខវិជ្ជា',
+      titleKh: 'គ្រប់គ្រងមុខវិជ្ជា',
       titleEn: 'GROUP 3: SUBJECT MANAGEMENT',
       icon: BookOpen,
       accentText: 'text-purple-400',
@@ -1226,7 +1080,7 @@ export default function App() {
           onClick: () => {
             setActiveSubjectSubMenu('SUBJECT_LIST');
             setActiveSubmenuKey('G3_SUBJECT_LIST');
-            setBreadcrumbGroupKh('៣. គ្រប់គ្រងមុខវិជ្ជា');
+            setBreadcrumbGroupKh('គ្រប់គ្រងមុខវិជ្ជា');
             setBreadcrumbItemKh('បញ្ជីមុខវិជ្ជា');
             setActiveNav('SUBJECT_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1271,7 +1125,7 @@ export default function App() {
           onClick: () => {
             setActiveSubjectSubMenu('SUBJECT_ACADEMIC_CONFIG');
             setActiveSubmenuKey('G3_SUBJECT_ACADEMIC_CONFIG');
-            setBreadcrumbGroupKh('៣. គ្រប់គ្រងមុខវិជ្ជា');
+            setBreadcrumbGroupKh('គ្រប់គ្រងមុខវិជ្ជា');
             setBreadcrumbItemKh('ការកំណត់មុខវិជ្ជាតាមឆ្នាំសិក្សា');
             setActiveNav('SUBJECT_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1306,7 +1160,7 @@ export default function App() {
           onClick: () => {
             setActiveSubjectSubMenu('MAX_SCORE_CONFIG');
             setActiveSubmenuKey('G3_MAX_SCORE_CONFIG');
-            setBreadcrumbGroupKh('៣. គ្រប់គ្រងមុខវិជ្ជា');
+            setBreadcrumbGroupKh('គ្រប់គ្រងមុខវិជ្ជា');
             setBreadcrumbItemKh('កំណត់ពិន្ទុអតិបរមា');
             setActiveNav('SUBJECT_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1341,7 +1195,7 @@ export default function App() {
           onClick: () => {
             setActiveSubjectSubMenu('GRADE_RANGE_CONFIG');
             setActiveSubmenuKey('G3_GRADE_RANGE_CONFIG');
-            setBreadcrumbGroupKh('៣. គ្រប់គ្រងមុខវិជ្ជា');
+            setBreadcrumbGroupKh('គ្រប់គ្រងមុខវិជ្ជា');
             setBreadcrumbItemKh('កំណត់ពិន្ទុនិទ្ទេសសម្រាប់មុខវិជ្ជានីមួយៗ');
             setActiveNav('SUBJECT_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1376,7 +1230,7 @@ export default function App() {
           onClick: () => {
             setActiveSubjectSubMenu('TEACHER_SUBJECT_CLASS_ASSIGNMENTS');
             setActiveSubmenuKey('G3_TEACHER_SUBJECT_ASSIGNMENT');
-            setBreadcrumbGroupKh('៣. គ្រប់គ្រងមុខវិជ្ជា');
+            setBreadcrumbGroupKh('គ្រប់គ្រងមុខវិជ្ជា');
             setBreadcrumbItemKh('ការចាត់តាំងគ្រូ និងមុខវិជ្ជា');
             setActiveNav('SUBJECT_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1409,7 +1263,7 @@ export default function App() {
     {
       id: 'GROUP_4_ONLINE_EXAMINATION' as FunctionalSidebarGroupId,
       code: '4',
-      titleKh: '៤. គ្រប់គ្រងការប្រឡង',
+      titleKh: 'គ្រប់គ្រងការប្រឡង',
       titleEn: 'GROUP 4: ONLINE EXAMINATION',
       icon: FileCheck,
       accentText: 'text-amber-400',
@@ -1425,7 +1279,7 @@ export default function App() {
             setOnlineExamInitialTab('QUESTIONS_BUILDER');
             setOnlineExamSelectorOpen(true);
             setActiveSubmenuKey('G4_EXAM_MANAGEMENT');
-            setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+            setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
             setBreadcrumbItemKh('គ្រប់គ្រងវិញ្ញាសាប្រឡង');
             setActiveNav('ONLINE_EXAMS');
             setIsMobileDrawerOpen(false);
@@ -1472,7 +1326,7 @@ export default function App() {
           icon: HelpCircle,
           onClick: () => {
             setActiveSubmenuKey('G4_QUESTION_BANK');
-            setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+            setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
             setBreadcrumbItemKh('ឃ្លាំងសំណួរ');
             setActiveNav('SUBJECTS_QUESTIONS');
             setIsMobileDrawerOpen(false);
@@ -1515,7 +1369,7 @@ export default function App() {
             setOnlineExamInitialTab('STUDENT_EXAM_VIEW');
             setOnlineExamSelectorOpen(false);
             setActiveSubmenuKey('G4_ONLINE_EXAM');
-            setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+            setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
             setBreadcrumbItemKh('ការប្រឡងអនឡាញ');
             setActiveNav('ONLINE_EXAMS');
             setIsMobileDrawerOpen(false);
@@ -1553,7 +1407,7 @@ export default function App() {
             setOnlineExamInitialTab('RESPONSES_GRADING');
             setOnlineExamSelectorOpen(false);
             setActiveSubmenuKey('G4_EXAM_ATTEMPTS');
-            setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+            setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
             setBreadcrumbItemKh('ការចូលប្រឡងរបស់សិស្ស');
             setActiveNav('ONLINE_EXAMS');
             setIsMobileDrawerOpen(false);
@@ -1591,7 +1445,7 @@ export default function App() {
             setOnlineExamInitialTab('RESPONSES_GRADING');
             setOnlineExamSelectorOpen(false);
             setActiveSubmenuKey('G4_EXAM_RESULTS');
-            setBreadcrumbGroupKh('៤. គ្រប់គ្រងការប្រឡង');
+            setBreadcrumbGroupKh('គ្រប់គ្រងការប្រឡង');
             setBreadcrumbItemKh('លទ្ធផលប្រឡងអនឡាញ');
             setActiveNav('ONLINE_EXAMS');
             setIsMobileDrawerOpen(false);
@@ -1626,7 +1480,7 @@ export default function App() {
     {
       id: 'GROUP_5_SCORE_MANAGEMENT' as FunctionalSidebarGroupId,
       code: '5',
-      titleKh: '៥. គ្រប់គ្រងពិន្ទុ',
+      titleKh: 'គ្រប់គ្រងពិន្ទុ',
       titleEn: 'GROUP 5: SCORE MANAGEMENT',
       icon: BarChart3,
       accentText: 'text-emerald-400',
@@ -1641,7 +1495,7 @@ export default function App() {
           onClick: () => {
             setActiveScoreSubMenu('SCORE_ENTRY');
             setActiveSubmenuKey('G5_SCORE_ENTRY');
-            setBreadcrumbGroupKh('៥. គ្រប់គ្រងពិន្ទុ');
+            setBreadcrumbGroupKh('គ្រប់គ្រងពិន្ទុ');
             setBreadcrumbItemKh('ការបញ្ចូលពិន្ទុ');
             setActiveNav('SCORE_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1676,7 +1530,7 @@ export default function App() {
           onClick: () => {
             setActiveScoreSubMenu('SCORES_BY_CLASS');
             setActiveSubmenuKey('G5_MONTHLY_SCORE_MGMT');
-            setBreadcrumbGroupKh('៥. គ្រប់គ្រងពិន្ទុ');
+            setBreadcrumbGroupKh('គ្រប់គ្រងពិន្ទុ');
             setBreadcrumbItemKh('គ្រប់គ្រងពិន្ទុប្រចាំខែ');
             setActiveNav('SCORE_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1711,7 +1565,7 @@ export default function App() {
           onClick: () => {
             setActiveScoreSubMenu('SCORES_BY_SUBJECT');
             setActiveSubmenuKey('G5_SEMESTER_SCORE_MGMT');
-            setBreadcrumbGroupKh('៥. គ្រប់គ្រងពិន្ទុ');
+            setBreadcrumbGroupKh('គ្រប់គ្រងពិន្ទុ');
             setBreadcrumbItemKh('គ្រប់គ្រងពិន្ទុប្រចាំឆមាស');
             setActiveNav('SCORE_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1756,7 +1610,7 @@ export default function App() {
           onClick: () => {
             setActiveScoreSubMenu('MISSING_SCORE_MONITORING');
             setActiveSubmenuKey('G5_SCORE_VERIFICATION');
-            setBreadcrumbGroupKh('៥. គ្រប់គ្រងពិន្ទុ');
+            setBreadcrumbGroupKh('គ្រប់គ្រងពិន្ទុ');
             setBreadcrumbItemKh('ការផ្ទៀងផ្ទាត់ពិន្ទុ');
             setActiveNav('SCORE_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1791,7 +1645,7 @@ export default function App() {
           onClick: () => {
             setActiveScoreSubMenu('SCORE_SUBMISSION_STATUS');
             setActiveSubmenuKey('G5_SCORE_APPROVAL');
-            setBreadcrumbGroupKh('៥. គ្រប់គ្រងពិន្ទុ');
+            setBreadcrumbGroupKh('គ្រប់គ្រងពិន្ទុ');
             setBreadcrumbItemKh('ការអនុម័តពិន្ទុ');
             setActiveNav('SCORE_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -1824,7 +1678,7 @@ export default function App() {
     {
       id: 'GROUP_6_RESULTS_RANKINGS' as FunctionalSidebarGroupId,
       code: '6',
-      titleKh: '៦. លទ្ធផល និងចំណាត់ថ្នាក់',
+      titleKh: 'លទ្ធផល និងចំណាត់ថ្នាក់',
       titleEn: 'GROUP 6: ACADEMIC RESULTS & RANKINGS',
       icon: Award,
       accentText: 'text-rose-400',
@@ -1839,7 +1693,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('MONTHLY_RANKING');
             setActiveSubmenuKey('G6_MONTHLY_RESULTS');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('លទ្ធផលសិក្សាប្រចាំខែ');
             setActiveNav('OFFICIAL_REPORTS');
             setIsMobileDrawerOpen(false);
@@ -1884,7 +1738,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('MONTHLY_RANKING');
             setActiveSubmenuKey('G6_SEMESTER_1_RESULTS');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('លទ្ធផលប្រចាំឆមាសទី ១');
             setActiveNav('OFFICIAL_REPORTS');
             setIsMobileDrawerOpen(false);
@@ -1919,7 +1773,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('MONTHLY_RANKING');
             setActiveSubmenuKey('G6_SEMESTER_2_RESULTS');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('លទ្ធផលប្រចាំឆមាសទី ២');
             setActiveNav('OFFICIAL_REPORTS');
             setIsMobileDrawerOpen(false);
@@ -1954,7 +1808,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('ANNUAL_RANKING');
             setActiveSubmenuKey('G6_ANNUAL_RESULTS');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('លទ្ធផលសិក្សាប្រចាំឆ្នាំ');
             setActiveNav('OFFICIAL_REPORTS');
             setIsMobileDrawerOpen(false);
@@ -1999,7 +1853,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('SUBJECT_GRADES_RANKINGS');
             setActiveSubmenuKey('G6_SUBJECT_GRADES');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('និទ្ទេសតាមមុខវិជ្ជា');
             setActiveNav('OFFICIAL_REPORTS');
             setIsMobileDrawerOpen(false);
@@ -2034,7 +1888,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('SUBJECT_GRADES_RANKINGS');
             setActiveSubmenuKey('G6_SUBJECT_RANKINGS');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('ចំណាត់ថ្នាក់តាមមុខវិជ្ជា');
             setActiveNav('OFFICIAL_REPORTS');
             setIsMobileDrawerOpen(false);
@@ -2069,7 +1923,7 @@ export default function App() {
           onClick: () => {
             setReportTargetTemplate('MONTHLY_HONOR_ROLL');
             setActiveSubmenuKey('G6_OVERALL_RANKINGS');
-            setBreadcrumbGroupKh('៦. លទ្ធផល និងចំណាត់ថ្នាក់');
+            setBreadcrumbGroupKh('លទ្ធផល និងចំណាត់ថ្នាក់');
             setBreadcrumbItemKh('ចំណាត់ថ្នាក់សិស្សរួម');
             setActiveNav('HONOR_ROLL');
             setIsMobileDrawerOpen(false);
@@ -2102,7 +1956,7 @@ export default function App() {
     {
       id: 'GROUP_7_REPORTS' as FunctionalSidebarGroupId,
       code: '7',
-      titleKh: '៧. របាយការណ៍',
+      titleKh: 'របាយការណ៍',
       titleEn: 'GROUP 7: REPORTS',
       icon: FileText,
       accentText: 'text-cyan-400',
@@ -2129,7 +1983,7 @@ export default function App() {
             setActiveReportCategory(cat.id);
             setActiveReportSubItem(cat.subReports[0].id);
             setActiveSubmenuKey(`G7_${cat.id}`);
-            setBreadcrumbGroupKh('៧. របាយការណ៍');
+            setBreadcrumbGroupKh('របាយការណ៍');
             setBreadcrumbItemKh(cleanCatTitleKh);
             setActiveNav('REPORT_CENTER');
             setIsMobileDrawerOpen(false);
@@ -2143,7 +1997,7 @@ export default function App() {
               onClick: () => {
                 setActiveReportCategory(cat.id);
                 setActiveReportSubItem(subRep.id);
-                setBreadcrumbGroupKh('៧. របាយការណ៍');
+                setBreadcrumbGroupKh('របាយការណ៍');
                 setBreadcrumbItemKh(cleanSubTitleKh);
                 setActiveNav('REPORT_CENTER');
                 setIsMobileDrawerOpen(false);
@@ -2156,7 +2010,7 @@ export default function App() {
     {
       id: 'GROUP_8_USER_ACCESS' as FunctionalSidebarGroupId,
       code: '8',
-      titleKh: '៨. គ្រប់គ្រងអ្នកប្រើប្រាស់',
+      titleKh: 'គ្រប់គ្រងអ្នកប្រើប្រាស់',
       titleEn: 'GROUP 8: USER & ACCESS MANAGEMENT',
       icon: ShieldCheck,
       accentText: 'text-orange-400',
@@ -2171,7 +2025,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('AUTHENTICATION');
             setActiveSubmenuKey('G8_USER_ACCOUNTS');
-            setBreadcrumbGroupKh('៨. គ្រប់គ្រងអ្នកប្រើប្រាស់');
+            setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
             setBreadcrumbItemKh('គណនីអ្នកប្រើប្រាស់');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2205,7 +2059,7 @@ export default function App() {
           icon: UserCheck,
           onClick: () => {
             setActiveSubmenuKey('G8_TEACHER_ACCOUNTS');
-            setBreadcrumbGroupKh('៨. គ្រប់គ្រងអ្នកប្រើប្រាស់');
+            setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
             setBreadcrumbItemKh('គណនីគ្រូបង្រៀន');
             setActiveNav('TEACHERS');
             setIsMobileDrawerOpen(false);
@@ -2249,7 +2103,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('AUTHENTICATION');
             setActiveSubmenuKey('G8_STUDENT_ACCOUNTS');
-            setBreadcrumbGroupKh('៨. គ្រប់គ្រងអ្នកប្រើប្រាស់');
+            setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
             setBreadcrumbItemKh('គណនីសិស្ស');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2284,7 +2138,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('ROLES_RBAC');
             setActiveSubmenuKey('G8_ROLES_PERMISSIONS');
-            setBreadcrumbGroupKh('៨. គ្រប់គ្រងអ្នកប្រើប្រាស់');
+            setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
             setBreadcrumbItemKh('តួនាទី និងសិទ្ធិប្រើប្រាស់');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2319,7 +2173,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('AUDIT_LOGS');
             setActiveSubmenuKey('G8_ACTIVITY_LOGS');
-            setBreadcrumbGroupKh('៨. គ្រប់គ្រងអ្នកប្រើប្រាស់');
+            setBreadcrumbGroupKh('គ្រប់គ្រងអ្នកប្រើប្រាស់');
             setBreadcrumbItemKh('កំណត់ហេតុសកម្មភាព');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2352,7 +2206,7 @@ export default function App() {
     {
       id: 'GROUP_9_SYSTEM_SETTINGS' as FunctionalSidebarGroupId,
       code: '9',
-      titleKh: '៩. ការកំណត់ប្រព័ន្ធ',
+      titleKh: 'ការកំណត់ប្រព័ន្ធ',
       titleEn: 'GROUP 9: SYSTEM SETTINGS',
       icon: Settings,
       accentText: 'text-slate-300',
@@ -2367,7 +2221,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('SCHOOL_PROFILE');
             setActiveSubmenuKey('G9_SCHOOL_INFO');
-            setBreadcrumbGroupKh('៩. ការកំណត់ប្រព័ន្ធ');
+            setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
             setBreadcrumbItemKh('ព័ត៌មានសាលារៀន');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2402,7 +2256,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('ACADEMIC_YEARS');
             setActiveSubmenuKey('G9_ACADEMIC_SETTINGS');
-            setBreadcrumbGroupKh('៩. ការកំណត់ប្រព័ន្ធ');
+            setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
             setBreadcrumbItemKh('ការកំណត់ឆ្នាំសិក្សា');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2437,7 +2291,7 @@ export default function App() {
           onClick: () => {
             setActiveSubjectSubMenu('GRADE_RANGE_CONFIG');
             setActiveSubmenuKey('G9_SCORING_CONFIG');
-            setBreadcrumbGroupKh('៩. ការកំណត់ប្រព័ន្ធ');
+            setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
             setBreadcrumbItemKh('ការកំណត់ចន្លោះពិន្ទុ');
             setActiveNav('SUBJECT_MANAGEMENT');
             setIsMobileDrawerOpen(false);
@@ -2472,7 +2326,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('SCHOOL_PROFILE');
             setActiveSubmenuKey('G9_PRINTING_CONFIG');
-            setBreadcrumbGroupKh('៩. ការកំណត់ប្រព័ន្ធ');
+            setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
             setBreadcrumbItemKh('ការកំណត់ការបោះពុម្ព');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2507,7 +2361,7 @@ export default function App() {
           onClick: () => {
             setSettingsInitialTab('GAS_ENDPOINT');
             setActiveSubmenuKey('G9_SYSTEM_CONFIG');
-            setBreadcrumbGroupKh('៩. ការកំណត់ប្រព័ន្ធ');
+            setBreadcrumbGroupKh('ការកំណត់ប្រព័ន្ធ');
             setBreadcrumbItemKh('ការកំណត់ប្រព័ន្ធ');
             setActiveNav('SYSTEM_SETTINGS');
             setIsMobileDrawerOpen(false);
@@ -2648,13 +2502,23 @@ export default function App() {
                         }
                         setOpenSidebarGroups((prev) => ({ ...prev, [group.id]: true }));
                         setSelectedMainGroupId(group.id);
-                        setIsSubmenuDataOpen(false);
-                        setActiveSubmenuKey('');
-                        setActiveChildMenuKey('');
-                        setBreadcrumbGroupKh(group.titleKh);
-                        setBreadcrumbItemKh('សូមជ្រើសរើសមុខងាររង');
-                        if (activeNav === 'STUDENT_PORTAL') {
+                        if (group.id === 'GROUP_1_DASHBOARD') {
+                          setDashboardSubMode('MAIN_DASHBOARD');
+                          setActiveSubmenuKey('G1_MAIN_DASHBOARD');
+                          setActiveChildMenuKey('');
+                          setIsSubmenuDataOpen(true);
+                          setBreadcrumbGroupKh(group.titleKh);
+                          setBreadcrumbItemKh('ទំព័រដើមរួម');
                           setActiveNav('DASHBOARD');
+                        } else {
+                          setIsSubmenuDataOpen(false);
+                          setActiveSubmenuKey('');
+                          setActiveChildMenuKey('');
+                          setBreadcrumbGroupKh(group.titleKh);
+                          setBreadcrumbItemKh('សូមជ្រើសរើសមុខងាររង');
+                          if (activeNav === 'STUDENT_PORTAL') {
+                            setActiveNav('DASHBOARD');
+                          }
                         }
                         setIsMobileDrawerOpen(false);
                       }}
@@ -2680,98 +2544,7 @@ export default function App() {
                           </span>
                         )}
                       </div>
-                      {expanded && (
-                        <span
-                          className={`text-[10px] font-extrabold font-mono-tabular px-1.5 py-0.5 rounded-md shrink-0 ${
-                            group.isActiveGroup
-                              ? 'bg-white/25 text-white'
-                              : 'bg-white/5 text-slate-400'
-                          }`}
-                        >
-                          {group.items.length}
-                        </span>
-                      )}
                     </button>
-
-                    {/* Level 2 (Sub Menu) & Level 3 (Child Menu) Tree inside Sidebar when Main Menu is active */}
-                    {expanded && group.isActiveGroup && (
-                      <div className="mt-1 ml-3.5 pl-2.5 border-l border-white/15 space-y-1">
-                        {group.items.map((sub, subIdx) => {
-                          const SubIcon = sub.icon;
-                          const isSubSelected = activeSubmenuKey === sub.key;
-                          return (
-                            <div key={sub.key}>
-                              <button
-                                type="button"
-                                data-testid={`sidebar-tree-sub-${sub.key}`}
-                                onClick={() => {
-                                  setSelectedMainGroupId(group.id);
-                                  setActiveSubmenuKey(sub.key);
-                                  setActiveChildMenuKey('');
-                                  setIsSubmenuDataOpen(false);
-                                  setBreadcrumbGroupKh(group.titleKh);
-                                  setBreadcrumbItemKh(sub.labelKh);
-                                }}
-                                className={`w-full py-1.5 px-2.5 rounded-lg flex items-center justify-between gap-2 text-left text-[11px] font-bold font-khmer-body transition-colors cursor-pointer ${
-                                  isSubSelected
-                                    ? 'bg-white/15 text-white'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                                }`}
-                              >
-                                <span className="flex items-center gap-2 min-w-0 truncate">
-                                  <SubIcon className="w-3.5 h-3.5 shrink-0 text-blue-400" />
-                                  <span className="truncate">
-                                    {subIdx + 1}. {sub.labelKh}
-                                  </span>
-                                </span>
-                                {sub.children && sub.children.length > 0 && (
-                                  <ChevronDown
-                                    className={`w-3 h-3 shrink-0 transition-transform ${
-                                      isSubSelected ? 'rotate-0 text-blue-300' : '-rotate-90 text-slate-500'
-                                    }`}
-                                  />
-                                )}
-                              </button>
-
-                              {/* Level 3: Child Menu items nested under active Sub Menu */}
-                              {isSubSelected && sub.children && sub.children.length > 0 && (
-                                <div className="mt-0.5 ml-3 pl-2.5 border-l border-blue-400/30 space-y-0.5">
-                                  {sub.children.map((child, childIdx) => {
-                                    const isChildSelected =
-                                      isSubmenuDataOpen && activeChildMenuKey === child.key;
-                                    return (
-                                      <button
-                                        key={child.key}
-                                        type="button"
-                                        data-testid={`sidebar-tree-child-${child.key}`}
-                                        onClick={() => {
-                                          setSelectedMainGroupId(group.id);
-                                          setActiveSubmenuKey(sub.key);
-                                          setActiveChildMenuKey(child.key);
-                                          setIsSubmenuDataOpen(true);
-                                          sub.onClick();
-                                          child.onClick();
-                                        }}
-                                        className={`w-full py-1 px-2 rounded-md flex items-center gap-1.5 text-left text-[10.5px] font-semibold font-khmer-body transition-colors cursor-pointer ${
-                                          isChildSelected
-                                            ? 'bg-blue-500/30 text-blue-200 font-bold'
-                                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                        }`}
-                                      >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 opacity-70" />
-                                        <span className="truncate">
-                                          {subIdx + 1}.{childIdx + 1} {child.labelKh}
-                                        </span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
 
                     {!expanded && (
                       <div className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute left-14 top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 rounded-xl bg-[#14171F] text-white text-xs font-semibold font-khmer-body whitespace-nowrap border border-white/10 shadow-lg">
@@ -3021,25 +2794,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Center Global Search Pill (Staff/Admin Only) */}
-            {!isCurrentUserStudent && (
-              <div className="hidden md:flex items-center relative w-72 lg:w-80 shrink-0">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={globalSearchQuery}
-                  onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                  placeholder="ស្វែងរកសិស្ស / អត្តលេខ / ថ្នាក់..."
-                  aria-label="ស្វែងរកសិស្ស / អត្តលេខ / ថ្នាក់"
-                  className={`w-full pl-10 pr-4 py-2 text-xs rounded-xl border transition-all font-khmer-body focus:outline-none ${
-                    isDarkHeaderAccent
-                      ? 'bg-white/10 border-white/15 text-white placeholder:text-slate-400 focus:bg-white/15'
-                      : 'bg-slate-100 border-transparent text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15'
-                  }`}
-                />
-              </div>
-            )}
-
             {/* Right Action Controls */}
             <div className="flex items-center gap-2.5 shrink-0">
               {/* Quick Account / Role Switcher Button */}
@@ -3177,154 +2931,6 @@ export default function App() {
 
           {/* Main Workspace Viewport */}
           <main id="top" className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {/* Phase 3: Google Sheets Persistence & Connection Status Bar */}
-            <section
-              aria-label="Google Sheets Database Connection Status"
-              data-testid="gas-persistence-status-bar"
-              className="no-print mb-4 rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-2xs space-y-2.5"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2.5 min-w-0">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-800 font-khmer-body">
-                    <Database className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>ស្ថានភាពតភ្ជាប់មូលដ្ឋានទិន្នន័យ (25 តារាង)៖</span>
-                  </span>
-
-                  {/* Connection Status Pill */}
-                  {adapterConfig.mode === 'GAS_PRODUCTION' &&
-                    adapterConfig.connectionState === 'CONNECTED' &&
-                    !adapterConfig.simulateConnectionFailure && (
-                      <span
-                        data-testid="gas-connection-badge"
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-extrabold font-khmer-body"
-                      >
-                        <span>🟢 បានភ្ជាប់ Google Sheets (GAS_PRODUCTION)</span>
-                      </span>
-                    )}
-
-                  {adapterConfig.mode === 'GAS_PRODUCTION' &&
-                    (adapterConfig.connectionState === 'ERROR' ||
-                      adapterConfig.connectionState === 'DISCONNECTED' ||
-                      adapterConfig.simulateConnectionFailure) && (
-                      <span
-                        data-testid="gas-connection-badge"
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-extrabold font-khmer-body"
-                      >
-                        <span>
-                          🔴 ដាច់ការតភ្ជាប់ Google Sheets (GAS Unavailable — ទិន្នន័យមិនរក្សាទុក)
-                        </span>
-                      </span>
-                    )}
-
-                  {adapterConfig.mode === 'IN_MEMORY_PREVIEW' && (
-                    <span
-                      data-testid="gas-connection-badge"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-extrabold font-khmer-body"
-                    >
-                      <span>🟡 In-Memory Preview (Local Dev — មិនទាន់ភ្ជាប់ Google Sheets)</span>
-                    </span>
-                  )}
-
-                  <span
-                    data-testid="gas-record-count-summary"
-                    className="text-[11px] font-mono-tabular font-bold text-slate-500"
-                  >
-                    សិស្ស៖ {db.Students.length} • សរុប 25 តារាង
-                  </span>
-                </div>
-
-                {/* Mode Switcher & Connection Controls */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    data-testid="switch-mode-in-memory-btn"
-                    onClick={() => {
-                      DataService.setPersistenceMode('IN_MEMORY_PREVIEW');
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-khmer-body border transition-all cursor-pointer ${
-                      adapterConfig.mode === 'IN_MEMORY_PREVIEW'
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    IN_MEMORY_PREVIEW
-                  </button>
-
-                  <button
-                    type="button"
-                    data-testid="switch-mode-gas-production-btn"
-                    onClick={() => {
-                      const res = DataService.setPersistenceMode(
-                        'GAS_PRODUCTION',
-                        {
-                          currentDb: db,
-                          simulateConnectionFailure: false,
-                        }
-                      );
-                      if (res.ok && res.db) {
-                        setDb(res.db);
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-khmer-body border transition-all cursor-pointer ${
-                      adapterConfig.mode === 'GAS_PRODUCTION' &&
-                      !adapterConfig.simulateConnectionFailure
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                        : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                    }`}
-                  >
-                    GAS_PRODUCTION (Google Sheets)
-                  </button>
-
-                  {adapterConfig.mode === 'GAS_PRODUCTION' && (
-                    <button
-                      type="button"
-                      data-testid="toggle-gas-connection-failure-btn"
-                      onClick={() => {
-                        DataService.setSimulateGasFailure(
-                          !adapterConfig.simulateConnectionFailure
-                        );
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-extrabold font-khmer-body border transition-all cursor-pointer ${
-                        adapterConfig.simulateConnectionFailure
-                          ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
-                          : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
-                      }`}
-                    >
-                      {adapterConfig.simulateConnectionFailure
-                        ? 'ភ្ជាប់ Google Sheets ឡើងវិញ (Reconnect)'
-                        : 'សាកល្បងផ្តាច់ការតភ្ជាប់ GAS (Simulate Failure)'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Operation Feedback Strip (LOADING / SUCCESS / ERROR) */}
-              {adapterFeedback && adapterFeedback.status !== 'IDLE' && (
-                <div
-                  data-testid="gas-operation-feedback-banner"
-                  data-feedback-status={adapterFeedback.status}
-                  className={`px-3.5 py-2 rounded-xl border text-xs font-khmer-body flex flex-wrap items-center justify-between gap-2 ${
-                    adapterFeedback.status === 'ERROR'
-                      ? 'bg-rose-50 border-rose-200 text-rose-800'
-                      : adapterFeedback.status === 'LOADING'
-                        ? 'bg-blue-50 border-blue-200 text-blue-800'
-                        : 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-extrabold">
-                      {adapterFeedback.titleKh}៖
-                    </span>
-                    <span className="truncate">{adapterFeedback.messageKh}</span>
-                  </div>
-                  <span className="text-[11px] font-mono-tabular font-bold shrink-0">
-                    {adapterFeedback.persistedToGoogleSheets
-                      ? 'Persisted to Google Sheets (25 Tables)'
-                      : 'Not Saved to Google Sheets'}
-                  </span>
-                </div>
-              )}
-            </section>
 
             {/* Hierarchical Menu Panel: Main Menu -> Sub Menu -> Child Menu */}
             {!isCurrentUserStudent && activeNav !== 'STUDENT_PORTAL' && !isSubmenuDataOpen && (() => {
@@ -3383,7 +2989,7 @@ export default function App() {
                               <SelectedSubIcon className="w-4 h-4" />
                             </span>
                             <span className="truncate">
-                              {selectedSubIndex + 1}. {selectedSubItem.labelKh}
+                              {selectedSubItem.labelKh}
                             </span>
                           </span>
                         </div>
@@ -3391,7 +2997,7 @@ export default function App() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {selectedSubItem.children.map((child, childIdx) => {
+                      {selectedSubItem.children.map((child) => {
                         const ChildIcon = child.icon;
                         return (
                           <button
@@ -3413,7 +3019,7 @@ export default function App() {
                             </span>
                             <div className="min-w-0 flex-1">
                               <div className="leading-snug">
-                                {selectedSubIndex + 1}.{childIdx + 1} {child.labelKh}
+                                {child.labelKh}
                               </div>
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -3442,7 +3048,7 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {activeGroup.items.map((sub, idx) => {
+                    {activeGroup.items.map((sub) => {
                       const SubIcon = sub.icon;
                       return (
                         <button
@@ -3469,7 +3075,7 @@ export default function App() {
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="leading-snug">
-                              {idx + 1}. {sub.labelKh}
+                              {sub.labelKh}
                             </div>
                           </div>
                           {sub.children && sub.children.length > 0 && (
@@ -3522,7 +3128,7 @@ export default function App() {
             ) : (isSubmenuDataOpen || activeNav === 'STUDENT_PORTAL') ? (
               <>
                 {/* Top Back Button & 3-Level Hierarchy Bar (Main Menu > Sub Menu > Child Menu) */}
-                {(() => {
+                {activeNav !== 'DASHBOARD' && (() => {
                   const activeGroup =
                     functionalSidebarGroups.find(
                       (g) => g.visible && g.id === selectedMainGroupId
@@ -3534,7 +3140,7 @@ export default function App() {
                     (child) => child.key === activeChildMenuKey
                   );
                   return (
-                    <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3 bg-white px-4 py-3 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div className="no-print mb-4 flex md:hidden flex-wrap items-center justify-between gap-3 bg-white px-4 py-3 rounded-2xl border border-slate-200/90 shadow-2xs">
                       <button
                         type="button"
                         data-testid="back-to-submenu-btn"
@@ -3602,12 +3208,13 @@ export default function App() {
                   );
                 })()}
 
-                {/* 1. DASHBOARD (Sections A, B, C, D, E + Homeroom Teacher Dashboard) */}
+                {/* 1. DASHBOARD (Super Admin Dashboard + Sections A, B, C, D, E + Homeroom Teacher Dashboard) */}
                 {activeNav === 'DASHBOARD' && (
                   <GrowlyDashboardView
                     db={db}
                     activeUserId={activeUserId}
                     searchQuery={globalSearchQuery}
+                    adapterConfig={adapterConfig}
                     dashboardSubMode={dashboardSubMode}
                     onChangeDashboardSubMode={(mode) => {
                       setDashboardSubMode(mode);

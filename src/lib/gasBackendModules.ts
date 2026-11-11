@@ -1520,7 +1520,7 @@ var StudentAccountService = (function () {
 })();`,
   },
   {
-    id: 18,
+    id: 19,
     filename: 'TeacherService.gs',
     layer: 'DOMAIN_SERVICES',
     summaryKh: 'សេវាកម្មគ្រប់គ្រងបញ្ជីគ្រូបង្រៀន គណនីចូលប្រព័ន្ធ និងការចាត់តាំងមុខវិជ្ជា-ថ្នាក់រៀនតាមឆ្នាំសិក្សា',
@@ -1534,7 +1534,7 @@ var StudentAccountService = (function () {
       'validateTeacherExamPermissions',
     ],
     code: `/**
- * File 18: TeacherService.gs
+ * File 19: TeacherService.gs
  * Teacher Management & Teacher-Subject-Class Assignment Synchronization Service
  * Reuses Users (RoleID='ROL-03') and TeacherSubjectAssignments sheets as Single Source of Truth.
  */

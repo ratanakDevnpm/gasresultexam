@@ -625,16 +625,19 @@ export const OfficialReportsPage: React.FC<OfficialReportsViewProps> = ({
       <div className="no-print bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
         {/* Top Row: Workspace Title & Quick A4 / Print Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 font-khmer-body">
-              <span className="font-semibold text-blue-600">មជ្ឈមណ្ឌលពិន្ទុ និងចំណាត់ថ្នាក់</span>
-              <span aria-hidden="true">·</span>
-              <span>វិទ្យាល័យទឹកជោរ</span>
-              <span aria-hidden="true">·</span>
-              <span>គ្រូបន្ទុកថ្នាក់៖ {homeroomTeacher?.FullNameKh || 'ជួន លីរតនៈ'}</span>
-            </div>
-            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-khmer-moul mt-1">
-              ពិន្ទុ ចំណាត់ថ្នាក់ និងតារាងកិត្តិយស ({currentClass.ClassName} • {selectedAcademicYear})
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
+              {activeReport === 'MONTHLY_RANKING'
+                ? 'លទ្ធផលសិក្សាប្រចាំខែ'
+                : activeReport === 'ANNUAL_RANKING'
+                  ? 'លទ្ធផលសិក្សាប្រចាំឆ្នាំ'
+                  : activeReport === 'MONTHLY_HONOR_ROLL'
+                    ? 'តារាងកិត្តិយសប្រចាំខែ'
+                    : activeReport === 'ANNUAL_HONOR_ROLL'
+                      ? 'តារាងកិត្តិយសប្រចាំឆ្នាំ'
+                      : activeReport === 'SUBJECT_GRADES_RANKINGS'
+                        ? 'និទ្ទេស និងចំណាត់ថ្នាក់តាមមុខវិជ្ជា'
+                        : 'ពិន្ទុ និងចំណាត់ថ្នាក់'}
             </h2>
           </div>
 

@@ -1477,24 +1477,11 @@ export const SecuritySimulatorView: React.FC<SecuritySimulatorViewProps> = ({
       {/* A. TOP ACTION & ROLE CONTEXT BAR                                      */}
       {/* ===================================================================== */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs mb-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-        {/* Left: Page Title & Role Context Subtitle */}
-        <div className="flex items-start gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
-            <BookOpen className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-khmer-moul">
-                មុខវិជ្ជា និងឃ្លាំងសំណួរ
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold font-mono-tabular">
-                {activeRole?.RoleName}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-600 font-khmer-body mt-0.5">
-              {roleContextSubtitle}
-            </p>
-          </div>
+        {/* Left: Short Page Title */}
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
+            ឃ្លាំងសំណួរ
+          </h2>
         </div>
 
         {/* Right Controls: Grade/Class Filter Pill + Role Action Buttons */}

@@ -13,6 +13,13 @@ import {
   SUBJECT_MANAGEMENT_SUBMENUS,
 } from '../lib/domainRules';
 import { DataService } from '../lib/centralizedDataService';
+import {
+  applyMoeysCurriculumPresetToDatabase,
+  getSpecForColumn,
+  MOEYS_CURRICULUM_COLUMNS,
+  MOEYS_GRADES_7_TO_12_CURRICULUM,
+  MoeysCurriculumColumnKey,
+} from '../lib/moeysSubjectCurriculum';
 import { TeacherManagementView } from './TeacherManagementView';
 import { SubjectGradeRangeSheet } from './SubjectGradeRangeSheet';
 import {
@@ -63,6 +70,8 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [selectedCurriculumCol, setSelectedCurriculumCol] =
+    useState<MoeysCurriculumColumnKey>('G12_SOC');
   const [feedbackBanner, setFeedbackBanner] = useState<{
     type: 'SUCCESS' | 'ERROR';
     messageKh: string;
@@ -92,6 +101,16 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
   const [gradingScalesDraft, setGradingScalesDraft] = useState<GradingScaleRecord[]>(
     () => db.GradingScales.map((g) => ({ ...g }))
   );
+
+  const handleApplyMoeysCurriculumCol = (colKey: MoeysCurriculumColumnKey) => {
+    setSelectedCurriculumCol(colKey);
+    const res = applyMoeysCurriculumPresetToDatabase(db, colKey);
+    DataService.commitState(setDb, res.updatedDb);
+    setFeedbackBanner({
+      type: 'SUCCESS',
+      messageKh: res.messageKh,
+    });
+  };
 
   const filteredSubjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -273,23 +292,20 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
       {/* Module Header Banner */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-bold font-khmer-body">
-                <BookOpen className="w-3.5 h-3.5" />
-                ម៉ូឌុលឯករាជ្យទី ១ • SUBJECT MANAGEMENT
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-xs font-bold font-khmer-body">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                ប្រភពទិន្នន័យកណ្តាលតែមួយ (Single Source of Truth)
-              </span>
-            </div>
-            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-khmer-moul mt-1">
-              គ្រប់គ្រងមុខវិជ្ជា (Subject Management)
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
+              {activeSubMenu === 'SUBJECT_ACADEMIC_CONFIG'
+                ? 'ការកំណត់មុខវិជ្ជាតាមឆ្នាំសិក្សា'
+                : activeSubMenu === 'MAX_SCORE_CONFIG'
+                  ? 'កំណត់ពិន្ទុអតិបរមា'
+                  : activeSubMenu === 'GRADE_RANGE_CONFIG'
+                    ? 'កំណត់ពិន្ទុនិទ្ទេស'
+                    : activeSubMenu === 'COEFFICIENT_CONFIG'
+                      ? 'កំណត់មេគុណមុខវិជ្ជា'
+                      : activeSubMenu === 'TEACHER_SUBJECT_CLASS_ASSIGNMENTS'
+                        ? 'ការចាត់តាំងគ្រូ និងមុខវិជ្ជា'
+                        : 'បញ្ជីមុខវិជ្ជា'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 font-khmer-body">
-              កំណត់បញ្ជីមុខវិជ្ជា ឆ្នាំសិក្សា ពិន្ទុអតិបរមា ចន្លោះនិទ្ទេស មេគុណមុខវិជ្ជា និងការចាត់តាំងគ្រូ-មុខវិជ្ជា-ថ្នាក់ ដែលភ្ជាប់ដោយស្វ័យប្រវត្តិទៅកាន់ម៉ូឌុលគ្រប់គ្រងពិន្ទុ។
-            </p>
           </div>
 
           {/* Summary KPI Badges */}
@@ -376,6 +392,228 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
         </div>
       )}
 
+      {/* =====================================================================
+          MOEYS OFFICIAL CURRICULUM & COEFFICIENT MATRIX (ថ្នាក់ទី ៧, ៨, ៩, ១០, ១១, ១២)
+         ===================================================================== */}
+      {(activeSubMenu === 'SUBJECT_LIST' ||
+        activeSubMenu === 'SUBJECT_ACADEMIC_CONFIG' ||
+        activeSubMenu === 'MAX_SCORE_CONFIG' ||
+        activeSubMenu === 'COEFFICIENT_CONFIG') && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 font-khmer-moul flex items-center gap-2">
+                <Award className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span>
+                  តារាងមុខវិជ្ជា និងមេគុណតាមថ្នាក់ទី ៧, ៨, ៩, ១០, ១១, ១២ (ក្រសួងអប់រំ យុវជន និងកីឡា)
+                </span>
+              </h3>
+              <p className="text-xs text-slate-600 font-khmer-body mt-1">
+                គោលការណ៍គណនាផ្លូវការ៖ <strong>១ មេគុណ = ៥០ ពិន្ទុ</strong> (មេគុណ 1.0 = 50 ពិន្ទុ · មេគុណ 1.5 = 75 ពិន្ទុ · មេគុណ 2.0 = 100 ពិន្ទុ · មេគុណ 2.5 = 125 ពិន្ទុ)
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label="ជ្រើសរើសកម្រិតថ្នាក់ដើម្បីអនុវត្តមេគុណក្រសួងអប់រំ"
+                value={selectedCurriculumCol}
+                onChange={(e) =>
+                  setSelectedCurriculumCol(e.target.value as MoeysCurriculumColumnKey)
+                }
+                className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold font-khmer-body text-slate-900"
+              >
+                {MOEYS_CURRICULUM_COLUMNS.map((col) => (
+                  <option key={col.key} value={col.key}>
+                    {col.gradeLevelLabelKh}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                data-testid="apply-moeys-curriculum-btn"
+                onClick={() => handleApplyMoeysCurriculumCol(selectedCurriculumCol)}
+                className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold font-khmer-body inline-flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>
+                  អនុវត្តមុខវិជ្ជា និងមេគុណសម្រាប់{' '}
+                  {
+                    MOEYS_CURRICULUM_COLUMNS.find((c) => c.key === selectedCurriculumCol)
+                      ?.shortLabelKh
+                  }
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Grade Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {MOEYS_CURRICULUM_COLUMNS.map((col) => {
+              const isSelected = selectedCurriculumCol === col.key;
+              return (
+                <button
+                  key={col.key}
+                  type="button"
+                  onClick={() => setSelectedCurriculumCol(col.key)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-khmer-body border transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  {col.gradeLevelLabelKh}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Official MoEYS Grade 7-12 Curriculum & Coefficient Table */}
+          <div className="overflow-x-auto border border-slate-300 rounded-xl">
+            <table className="w-full text-center border-collapse text-xs font-khmer-body text-slate-900">
+              <thead>
+                <tr className="bg-slate-100 border-b border-slate-300 font-bold text-slate-900">
+                  <th rowSpan={2} className="border border-slate-300 px-2 py-2 whitespace-nowrap">
+                    ល.រ
+                  </th>
+                  <th rowSpan={2} className="border border-slate-300 px-2.5 py-2 whitespace-nowrap">
+                    កូដ
+                  </th>
+                  <th
+                    rowSpan={2}
+                    className="border border-slate-300 px-3 py-2 text-left whitespace-nowrap min-w-[160px]"
+                  >
+                    មុខវិជ្ជាផ្លូវការ
+                  </th>
+                  <th
+                    colSpan={3}
+                    className="border border-slate-300 px-2 py-1.5 bg-blue-50/70 text-blue-950"
+                  >
+                    បឋមភូមិមធ្យមសិក្សា (ថ្នាក់ទី ៧–៩)
+                  </th>
+                  <th
+                    colSpan={5}
+                    className="border border-slate-300 px-2 py-1.5 bg-indigo-50/70 text-indigo-950"
+                  >
+                    ទុតិយភូមិមធ្យមសិក្សា (ថ្នាក់ទី ១០–១២)
+                  </th>
+                </tr>
+                <tr className="bg-slate-50 border-b border-slate-300 text-[11px] font-bold">
+                  {MOEYS_CURRICULUM_COLUMNS.map((col) => {
+                    const isSelected = selectedCurriculumCol === col.key;
+                    return (
+                      <th
+                        key={col.key}
+                        className={`border border-slate-300 px-2 py-1.5 whitespace-nowrap ${
+                          isSelected ? 'bg-indigo-100/90 text-indigo-950' : ''
+                        }`}
+                      >
+                        <div>{col.shortLabelKh}</div>
+                        <div className="text-[10px] font-normal text-slate-500">
+                          មេគុណ · ពិន្ទុ · ម៉ោង
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {MOEYS_GRADES_7_TO_12_CURRICULUM.map((item) => (
+                  <tr key={item.subjectId} className="hover:bg-slate-50/80">
+                    <td className="border border-slate-200 px-2 py-2 font-mono-tabular font-bold text-slate-600">
+                      {item.orderNumber}
+                    </td>
+                    <td className="border border-slate-200 px-2.5 py-2 font-mono-tabular font-bold text-blue-700">
+                      {item.subjectCode}
+                    </td>
+                    <td className="border border-slate-200 px-3 py-2 text-left">
+                      <div className="font-bold text-slate-900">{item.subjectNameKh}</div>
+                      <div className="text-[10px] text-slate-500">{item.categoryKh}</div>
+                    </td>
+                    {MOEYS_CURRICULUM_COLUMNS.map((col) => {
+                      const sp = getSpecForColumn(item, col.key);
+                      const isSelected = selectedCurriculumCol === col.key;
+                      const isHighCoeff = sp.coefficient >= 2.0;
+                      const isMidCoeff = sp.coefficient === 1.5;
+                      return (
+                        <td
+                          key={col.key}
+                          className={`border border-slate-200 px-2 py-1.5 whitespace-nowrap ${
+                            isSelected ? 'bg-indigo-50/50' : ''
+                          }`}
+                        >
+                          <div
+                            className={`font-mono-tabular font-extrabold ${
+                              isHighCoeff
+                                ? 'text-red-600'
+                                : isMidCoeff
+                                  ? 'text-indigo-700'
+                                  : 'text-slate-900'
+                            }`}
+                          >
+                            ×{sp.coefficient.toFixed(1)}
+                          </div>
+                          <div className="text-[10px] font-mono-tabular text-slate-600">
+                            {sp.maxScore}ពិន្ទុ · {sp.weeklyHours}ម៉
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+
+                {/* Footer Row 1: សរុបមេគុណ (តួចែកមធ្យមភាគ) */}
+                <tr className="bg-amber-50/80 font-extrabold text-slate-950">
+                  <td colSpan={3} className="border border-slate-300 px-3 py-2 text-right">
+                    សរុបមេគុណ (តួចែកមធ្យមភាគ)
+                  </td>
+                  {MOEYS_CURRICULUM_COLUMNS.map((col) => {
+                    const sumCoeff = MOEYS_GRADES_7_TO_12_CURRICULUM.reduce(
+                      (s, item) => s + getSpecForColumn(item, col.key).coefficient,
+                      0
+                    );
+                    return (
+                      <td
+                        key={col.key}
+                        className="border border-slate-300 px-2 py-2 font-mono-tabular text-indigo-800"
+                      >
+                        ×{sumCoeff.toFixed(1)}
+                      </td>
+                    );
+                  })}
+                </tr>
+
+                {/* Footer Row 2: សរុបពិន្ទុអតិបរមា និងចំនួនម៉ោងក្នុង ១ សប្ដាហ៍ */}
+                <tr className="bg-slate-100 font-bold text-slate-900">
+                  <td colSpan={3} className="border border-slate-300 px-3 py-2 text-right">
+                    សរុបពិន្ទុអតិបរមា និងម៉ោងសិក្សា/សប្ដាហ៍
+                  </td>
+                  {MOEYS_CURRICULUM_COLUMNS.map((col) => {
+                    const sumMax = MOEYS_GRADES_7_TO_12_CURRICULUM.reduce(
+                      (s, item) => s + getSpecForColumn(item, col.key).maxScore,
+                      0
+                    );
+                    const sumHours = MOEYS_GRADES_7_TO_12_CURRICULUM.reduce(
+                      (s, item) => s + getSpecForColumn(item, col.key).weeklyHours,
+                      0
+                    );
+                    return (
+                      <td
+                        key={col.key}
+                        className="border border-slate-300 px-2 py-2 font-mono-tabular text-[11px]"
+                      >
+                        <div className="font-extrabold text-slate-950">{sumMax} ពិន្ទុ</div>
+                        <div className="text-[10px] text-slate-600">{sumHours} ម៉ោង/សប្ដាហ៍</div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* SUBMENU 1: SUBJECT_LIST (បញ្ជីមុខវិជ្ជា) */}
       {activeSubMenu === 'SUBJECT_LIST' && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -385,7 +623,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
               <div>
                 <h3 className="text-sm sm:text-base font-extrabold text-slate-900 font-khmer-body flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-600" />
-                  <span>១. បញ្ជីមុខវិជ្ជាផ្លូវការ (Subject List)</span>
+                  <span>១. បញ្ជីមុខវិជ្ជាផ្លូវការក្នុងប្រព័ន្ធ (Active Subject List)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-khmer-body mt-0.5">
                   រាល់មុខវិជ្ជាទាំងអស់នៅក្នុងតារាងនេះត្រូវបានប្រើប្រាស់ដោយផ្ទាល់នៅក្នុងម៉ូឌុលគ្រប់គ្រងពិន្ទុ និងការប្រឡងអនឡាញ។
@@ -527,7 +765,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                     required
                     value={formCode}
                     onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                    placeholder="ឧ. CHM, BIO,ICT"
+                    placeholder="ឧ. CHM, BIO, ICT"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono-tabular uppercase"
                   />
                 </div>
@@ -540,10 +778,15 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                     onChange={(e) => setFormGradeLevel(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-bold"
                   >
-                    <option value="7-12">ថ្នាក់ទី 7-12 (គ្រប់កម្រិត)</option>
-                    <option value="10-12">ថ្នាក់ទី 10-12 (ទុតិយភូមិ)</option>
-                    <option value="7-9">ថ្នាក់ទី 7-9 (បឋមភូមិ)</option>
+                    <option value="7">ថ្នាក់ទី 7</option>
+                    <option value="8">ថ្នាក់ទី 8</option>
+                    <option value="9">ថ្នាក់ទី 9</option>
+                    <option value="10">ថ្នាក់ទី 10</option>
+                    <option value="11">ថ្នាក់ទី 11</option>
                     <option value="12">ថ្នាក់ទី 12</option>
+                    <option value="7-9">ថ្នាក់ទី 7-9 (បឋមភូមិ)</option>
+                    <option value="10-12">ថ្នាក់ទី 10-12 (ទុតិយភូមិ)</option>
+                    <option value="7-12">ថ្នាក់ទី 7-12 (គ្រប់កម្រិត)</option>
                   </select>
                 </div>
               </div>
@@ -590,6 +833,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                       const val = Number(e.target.value);
                       setFormMaxScore(val);
                       setFormPassingScore(Number((val / 2).toFixed(1)));
+                      setFormCoefficient(Number((val / 50).toFixed(1)));
                     }}
                     className="w-full px-2.5 py-2 rounded-xl border border-slate-200 font-mono-tabular font-bold"
                   />
@@ -619,7 +863,13 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                     step="0.5"
                     required
                     value={formCoefficient}
-                    onChange={(e) => setFormCoefficient(Number(e.target.value))}
+                    onChange={(e) => {
+                      const nextCoeff = Number(e.target.value);
+                      setFormCoefficient(nextCoeff);
+                      const nextMax = Math.round(nextCoeff * 50);
+                      setFormMaxScore(nextMax);
+                      setFormPassingScore(Number((nextMax / 2).toFixed(1)));
+                    }}
                     className="w-full px-2.5 py-2 rounded-xl border border-slate-200 font-mono-tabular font-bold"
                   />
                 </div>
@@ -680,7 +930,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-slate-900 font-khmer-body flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-600" />
-                <span>២. ការកំណត់មុខវិជ្ជាតាមឆ្នាំសិក្សា ឆមាស និងកម្រិតថ្នាក់ (Subject Academic Configuration)</span>
+                <span>២. ការកំណត់មុខវិជ្ជាតាមឆ្នាំសិក្សា ឆមាស និងកម្រិតថ្នាក់ (៧, ៨, ៩, ១០, ១១, ១២)</span>
               </h3>
               <p className="text-xs text-slate-500 font-khmer-body mt-0.5">
                 កំណត់ឆ្នាំសិក្សា ឆមាសទី១/ទី២ និងកម្រិតថ្នាក់ (៧-១២) សម្រាប់មុខវិជ្ជានីមួយៗ។
@@ -746,10 +996,15 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                           }
                           className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-bold"
                         >
-                          <option value="7-12">ថ្នាក់ទី 7-12</option>
-                          <option value="10-12">ថ្នាក់ទី 10-12</option>
-                          <option value="7-9">ថ្នាក់ទី 7-9</option>
+                          <option value="7">ថ្នាក់ទី 7</option>
+                          <option value="8">ថ្នាក់ទី 8</option>
+                          <option value="9">ថ្នាក់ទី 9</option>
+                          <option value="10">ថ្នាក់ទី 10</option>
+                          <option value="11">ថ្នាក់ទី 11</option>
                           <option value="12">ថ្នាក់ទី 12</option>
+                          <option value="7-9">ថ្នាក់ទី 7-9</option>
+                          <option value="10-12">ថ្នាក់ទី 10-12</option>
+                          <option value="7-12">ថ្នាក់ទី 7-12</option>
                         </select>
                       </td>
                       <td className="py-3 px-3">
@@ -951,10 +1206,10 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-slate-900 font-khmer-body flex items-center gap-2">
                 <Layers className="w-4 h-4 text-blue-600" />
-                <span>៥. កំណត់មេគុណមុខវិជ្ជា (Subject Coefficient Configuration)</span>
+                <span>៥. កំណត់មេគុណមុខវិជ្ជាតាមថ្នាក់ (Subject Coefficient Configuration)</span>
               </h3>
               <p className="text-xs text-slate-500 font-khmer-body mt-0.5">
-                មេគុណមុខវិជ្ជាកំណត់ទម្ងន់ពិន្ទុក្នុងការគណនាមធ្យមភាគប្រចាំខែ ឆមាស និងប្រចាំឆ្នាំរបស់សិស្ស។
+                មេគុណមុខវិជ្ជាកំណត់ទម្ងន់ពិន្ទុក្នុងការគណនាមធ្យមភាគប្រចាំខែ ឆមាស និងប្រចាំឆ្នាំរបស់សិស្ស (១ មេគុណ = ៥០ ពិន្ទុ)។
               </p>
             </div>
             <div className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-800 font-khmer-body">
@@ -973,6 +1228,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 font-khmer-body">
                   <th className="py-2.5 px-3">កូដ</th>
                   <th className="py-2.5 px-3">មុខវិជ្ជា</th>
+                  <th className="py-2.5 px-3 text-center">កម្រិតថ្នាក់</th>
                   <th className="py-2.5 px-3 text-center">ពិន្ទុអតិបរមា</th>
                   <th className="py-2.5 px-3 text-center">មេគុណបច្ចុប្បន្ន</th>
                   <th className="py-2.5 px-3 text-center">កំណត់មេគុណថ្មី (Coefficient)</th>
@@ -990,6 +1246,9 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                       <td className="py-3 px-3 font-bold text-slate-900">
                         {sub.SubjectNameKh}{' '}
                         <span className="text-slate-400 font-normal">({sub.SubjectNameEn})</span>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono-tabular">
+                        ទី {sub.GradeLevel}
                       </td>
                       <td className="py-3 px-3 text-center font-mono-tabular">
                         {sub.MaximumScore} ពិន្ទុ
@@ -1018,7 +1277,11 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({
                         <button
                           type="button"
                           onClick={() =>
-                            handleQuickSaveSubjectRow(sub, { coefficient: draftCoeff })
+                            handleQuickSaveSubjectRow(sub, {
+                              coefficient: draftCoeff,
+                              maximumScore: Math.round(draftCoeff * 50),
+                              passingScore: Number(((draftCoeff * 50) / 2).toFixed(1)),
+                            })
                           }
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors cursor-pointer"
                         >

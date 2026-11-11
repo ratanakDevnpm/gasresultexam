@@ -647,17 +647,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
       {/* Top Clean Workspace Header (Vercel / Notion Settings Style) */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 font-mono-tabular">
-            <Sparkles className="w-4 h-4" />
-            <span>SYSTEM SETTINGS, AUTH &amp; GAS CONFIGURATION WORKSPACE</span>
-          </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-khmer-moul mt-1">
-            ការកំណត់ប្រព័ន្ធ សុវត្ថិភាពគណនី និងការតភ្ជាប់ Google Apps Script (វិទ្យាល័យទឹកជោរ)
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
+            {activeTabMeta.labelKh}
           </h2>
-          <p className="text-xs text-slate-500 font-khmer-body mt-0.5">
-            គ្រប់គ្រងព័ត៌មានស្ថាប័ន គោលការណ៍សុវត្ថិភាព SHA-256 ការតភ្ជាប់តារាងទិន្នន័យទាំង ១៩ សន្លឹក និងកំណត់ហេតុសវនកម្ម
-          </p>
         </div>
 
         <div className="no-print flex flex-wrap items-center gap-2.5 shrink-0">

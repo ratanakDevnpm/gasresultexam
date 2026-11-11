@@ -287,26 +287,10 @@ export const ReportCenterView: React.FC<ReportCenterViewProps> = ({
          ===================================================================== */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-5 space-y-4 no-print">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-khmer-title">
-                  មជ្ឈមណ្ឌលរបាយការណ៍ និងការបោះពុម្ពផ្លូវការ (Report Center & Print Management)
-                </h2>
-                <span className="px-2.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold font-khmer-body">
-                  វិទ្យាល័យទឹកជោរ
-                </span>
-                <span className="px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold font-khmer-body">
-                  សិទ្ធិ៖ {scope.roleSummary.effectiveRoles.join(' + ')}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-khmer-body mt-1">
-                ជ្រើសរើសប្រភេទរបាយការណ៍ កំណត់តម្រងទិន្នន័យ មើលគម្រូបោះពុម្ព A4 (បញ្ឈរ/ផ្តេក) បោះពុម្ព ឬទាញយកជា PDF និង Excel
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 font-khmer-moul">
+              {currentSubReportMeta.titleKh.replace(/\s*\([^)]*\)\s*$/g, '')}
+            </h2>
           </div>
 
           {/* Primary Action Toolbar: Preview, Orientation, Print, Export PDF, Export Excel, Back */}
